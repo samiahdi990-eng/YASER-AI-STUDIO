@@ -6,43 +6,50 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Download Project
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Install Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Flutter
+      - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
-      - name: Create Android project
+      - name: Check Flutter
+        run: flutter doctor -v
+
+      - name: Create Android Project
         run: |
           flutter create --platforms=android --project-name yaser_ai_studio temp_app
           cp pubspec.yaml temp_app/pubspec.yaml
           cp -r lib temp_app/lib
 
-      - name: Check Dart source
+      - name: Check Dart Code
         working-directory: temp_app
         run: |
-          grep -nE 'fromSeed|mainAxisAlignment' lib/main.dart
-          grep -nE ':[[:space:]]*\.' lib/main.dart || true
+          flutter --version
+          dart analyze lib/main.dart
 
-      - name: Get packages
+      - name: Install Packages
         working-directory: temp_app
         run: flutter pub get
 
-      - name: Build APK
+      - name: Build Release APK
         working-directory: temp_app
         run: flutter build apk --release
 
@@ -51,3 +58,4 @@ jobs:
         with:
           name: YASER-AI-STUDIO-APK
           path: temp_app/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
