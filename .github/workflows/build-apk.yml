@@ -32,6 +32,12 @@ jobs:
           cp pubspec.yaml temp_app/pubspec.yaml
           cp -r lib temp_app/lib
 
+      - name: Check Dart source
+        working-directory: temp_app
+        run: |
+          grep -nE 'fromSeed|mainAxisAlignment' lib/main.dart
+          grep -nE ':[[:space:]]*\.' lib/main.dart || true
+
       - name: Get packages
         working-directory: temp_app
         run: flutter pub get
