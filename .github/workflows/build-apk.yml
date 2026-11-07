@@ -11,45 +11,42 @@ permissions:
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Project
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
-      - name: Check Flutter
-        run: flutter doctor -v
-
       - name: Create Android Project
         run: |
           flutter create --platforms=android --project-name yaser_ai_studio temp_app
-          cp pubspec.yaml temp_app/pubspec.yaml
+          rm -rf temp_app/lib
           cp -r lib temp_app/lib
+          cp pubspec.yaml temp_app/pubspec.yaml
 
-      - name: Check Dart Code
+      - name: Check Our Source Code
         working-directory: temp_app
         run: |
-          flutter --version
+          grep -nE 'fromSeed|mainAxisAlignment' lib/main.dart
           dart analyze lib/main.dart
 
       - name: Install Packages
         working-directory: temp_app
         run: flutter pub get
 
-      - name: Build Release APK
+      - name: Build APK
         working-directory: temp_app
         run: flutter build apk --release
 
