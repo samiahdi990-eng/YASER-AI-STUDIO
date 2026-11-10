@@ -1,0 +1,44 @@
+name: Build SarZarb Plus APK
+
+on:
+  push:
+    paths:
+      - 'games/SarZarb-Plus/**'
+      - '.github/workflows/sarzarb-plus.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build APK
+        working-directory: games/SarZarb-Plus
+        run: gradle assembleDebug
+
+      - name: Verify APK
+        run: test -s games/SarZarb-Plus/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SarZarb-Plus-APK
+          path: games/SarZarb-Plus/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
