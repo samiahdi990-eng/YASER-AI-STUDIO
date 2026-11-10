@@ -53,11 +53,41 @@ footer{text-align:center;color:#777;font-size:11px;padding:15px}
   <div class="info">نسخه آزمایشی رابط کاربری — اتصال واقعی در مرحله بعد راه‌اندازی می‌شود.</div>
 </main>
 <footer> L I F E &nbsp; C H A T </footer>
+
 <script>
-const statusBox=document.getElementById('status');
-function startChat(){statusBox.textContent='سامانه اتصال آنلاین در مرحله راه‌اندازی است.'}
-function nextChat(){statusBox.textContent='برای اتصال واقعی، ابتدا سرور باید فعال شود.'}
-function stopChat(){statusBox.textContent='اتصالی برقرار نشده است.'}
+const statusBox = document.getElementById('status');
+
+function startChat() {
+    statusBox.textContent = 'در حال ورود به LIFE CHAT...';
+
+    if (!window.FirebaseBridge) {
+        statusBox.textContent = 'اتصال Firebase در دسترس نیست.';
+        return;
+    }
+
+    window.FirebaseBridge.signInAnonymously();
+}
+
+window.onFirebaseAuthResult = function(raw) {
+    const result = JSON.parse(raw);
+
+    if (result.ok) {
+        statusBox.textContent =
+            'ورود موفق! شناسه کاربر: ' + result.uid;
+    } else {
+        statusBox.textContent =
+            'خطا در ورود: ' + result.error;
+    }
+};
+
+function nextChat() {
+    statusBox.textContent = 'سیستم پیدا کردن دوست هنوز در حال ساخت است.';
+}
+
+function stopChat() {
+    statusBox.textContent = 'جستجو متوقف شد.';
+}
 </script>
+
 </body>
 </html>
