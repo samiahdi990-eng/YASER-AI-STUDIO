@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101020">
+<title>LIFE CHAT</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101020;color:#fff;font-family:Tahoma,Arial,sans-serif}
+header{padding:25px 20px;text-align:center}
+.logo{font-size:34px;font-weight:900;letter-spacing:2px;color:#b9a0ff}
+.tag{color:#aaa;margin-top:9px;font-size:13px}
+main{padding:15px;max-width:480px;margin:auto}
+.card{background:#1b1b32;border:1px solid #343451;border-radius:22px;padding:20px;margin-bottom:17px}
+h2{font-size:18px;margin:0 0 14px}
+.video{height:230px;border-radius:17px;background:linear-gradient(145deg,#29294a,#15152a);display:flex;align-items:center;justify-content:center;text-align:center;color:#aaa}
+.camera{font-size:48px;display:block;margin-bottom:12px}
+.status{text-align:center;color:#c2b3ff;font-size:14px;margin:17px 0}
+button{width:100%;padding:16px;border:0;border-radius:14px;font-size:16px;font-weight:bold;margin-top:10px;cursor:pointer}
+.primary{background:#9270ff;color:white}
+.secondary{background:#30304b;color:white}
+.danger{background:#512b3b;color:#ffb7c8}
+.info{font-size:12px;color:#aaa;line-height:2;text-align:center;margin-top:18px}
+footer{text-align:center;color:#777;font-size:11px;padding:15px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">LIFE CHAT</div>
+  <div class="tag">با آدم‌های جدید آشنا شو</div>
+</header>
+<main>
+  <section class="card">
+    <h2>گفت‌وگوی تصویری تصادفی</h2>
+    <div class="video">
+      <div><span class="camera">📹</span>اتاق گفت‌وگوی شما<br>در انتظار اتصال</div>
+    </div>
+    <div class="status" id="status">برای شروع آماده‌ای؟</div>
+    <button class="primary" onclick="startChat()">شروع جستجوی دوست</button>
+    <button class="secondary" onclick="nextChat()">نفر بعدی</button>
+    <button class="danger" onclick="stopChat()">قطع اتصال</button>
+  </section>
+  <section class="card">
+    <h2>امکانات LIFE CHAT</h2>
+    <div class="info">
+      اتصال تصادفی دونفره<br>
+      تماس تصویری و صوتی<br>
+      گفت‌وگوی متنی<br>
+      امکان گزارش و مسدودسازی کاربران
+    </div>
+  </section>
+  <div class="info">نسخه آزمایشی رابط کاربری — اتصال واقعی در مرحله بعد راه‌اندازی می‌شود.</div>
+</main>
+<footer> L I F E &nbsp; C H A T </footer>
+<script>
+const statusBox=document.getElementById('status');
+function startChat(){statusBox.textContent='سامانه اتصال آنلاین در مرحله راه‌اندازی است.'}
+function nextChat(){statusBox.textContent='برای اتصال واقعی، ابتدا سرور باید فعال شود.'}
+function stopChat(){statusBox.textContent='اتصالی برقرار نشده است.'}
+</script>
+</body>
+</html>
