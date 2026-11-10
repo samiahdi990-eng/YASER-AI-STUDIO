@@ -1,0 +1,2 @@
+
+{ "project_info": { "project_number": "137728012330", "project_id": "lifechat-46fe1", "storage_bucket": "lifechat-46fe1.firebasestorage.app" }, "client": [ { "client_info": { "mobilesdk_app_id": "1:137728012330:android:92e13175f403489bd75353", "android_client_info": { "package_name": "com.lifechat.app" } }, "oauth_client": [], "api_key": [ { "current_key": "AIzaSyC3n2w9fHb49w0GP929nSlQ9wiKbtmJBuU" } ], "services": { "appinvite_service": { "other_platform_oauth_client": [] } } } ], "configuration_version": "1" }
