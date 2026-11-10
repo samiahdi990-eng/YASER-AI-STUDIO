@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#071b16">
+<title>سرضرب پلاس</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071b16;color:#fff;font-family:Tahoma,Arial,sans-serif;overflow:hidden;touch-action:manipulation}
+button{font-family:inherit;border:0;cursor:pointer;color:white}
+#app{height:100dvh;max-width:600px;margin:auto;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 0,#174b35,#071b16 65%)}
+header{height:65px;padding:10px 15px;display:flex;align-items:center;justify-content:space-between;background:#071b16d9;border-bottom:1px solid #ffffff18}
+.logo{font-size:19px;font-weight:bold;color:#f8d34e}
+.coins{background:#183e2c;border:1px solid #d8b847;border-radius:25px;padding:9px 13px;color:#ffdf58}
+.screen{display:none;height:calc(100dvh - 65px);overflow:auto;padding:18px}
+.screen.active{display:block}
+.hero{text-align:center;padding:20px 10px 12px}
+.ball-logo{font-size:75px;filter:drop-shadow(0 8px 8px #0008)}
+h1{margin:5px;color:#ffdc57;font-size:29px}
+.subtitle{color:#b5d2c1;font-size:13px}
+.panel{background:linear-gradient(145deg,#194b35,#102d23);border:1px solid #ffffff20;border-radius:18px;padding:15px;margin:12px 0;box-shadow:0 8px 22px #0003}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.primary{width:100%;padding:15px;border-radius:13px;background:linear-gradient(90deg,#e6a928,#f5d65b);color:#182419;font-weight:bold;font-size:17px;margin:7px 0}
+.secondary{padding:12px;border-radius:12px;background:#24563d;border:1px solid #ffffff20;font-weight:bold}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.menu-btn{padding:17px 8px;border-radius:14px;background:#17432f;border:1px solid #ffffff20;font-size:15px}
+.menu-btn span{display:block;font-size:25px;margin-bottom:7px}
+.small{font-size:12px;color:#b5cbbb}
+.progress{height:9px;background:#071b16;border-radius:10px;overflow:hidden;margin-top:9px}
+.progress i{display:block;height:100%;background:#f2ce4c;width:0}
+#gameScreen{padding:0;overflow:hidden;position:relative}
+#gameCanvas{width:100%;height:100%;display:block}
+.game-top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none}
+.game-pill{background:#06170edb;padding:9px 12px;border-radius:20px;font-size:13px}
+.game-controls{position:absolute;bottom:18px;left:15px;right:15px;display:flex;justify-content:space-between;align-items:center}
+.shoot{background:linear-gradient(135deg,#f7dc62,#e8a82a);color:#182419;font-weight:bold;border-radius:50%;width:90px;height:90px;font-size:17px;box-shadow:0 5px 0 #98651c}
+.control-hint{background:#06170dcc;padding:10px;border-radius:12px;font-size:12px}
+.overlay{display:none;position:absolute;inset:0;background:#000b;z-index:5;align-items:center;justify-content:center;padding:20px}
+.overlay.show{display:flex}
+.dialog{width:100%;max-width:390px;background:#153b2a;border:1px solid #d8bd4e;border-radius:20px;padding:22px;text-align:center}
+.dialog h2{color:#ffdc57}
+.item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #ffffff18}
+.levels{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.level{padding:12px 2px;border-radius:10px;background:#24563d;text-align:center}
+.level.locked{opacity:.35}
+.level.done{background:#987b27}
+footer{text-align:center;color:#779786;font-size:11px;padding:18px}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+ <div class="logo">⚽ سرضرب پلاس</div>
+ <div class="coins">🪙 <b id="coinCount">100</b></div>
+</header>
+
+<section id="home" class="screen active">
+ <div class="hero">
+  <div class="ball-logo">⚽</div>
+  <h1>سرضرب پلاس</h1>
+  <div class="subtitle">قهرمان زمین فوتبال شو!</div>
+ </div>
+ <div class="panel">
+  <div class="row"><b id="seasonName">فصل اول</b><span id="levelText">مرحله ۱ از ۲۵۰</span></div>
+  <div class="progress"><i id="levelProgress"></i></div>
+  <div class="small" style="margin-top:9px">پیشرفت فصل و مراحل بازی</div>
+ </div>
+ <button class="primary" onclick="startGame()">⚽ شروع بازی</button>
+ <div class="grid">
+  <button class="menu-btn" onclick="showLevels()"><span>🏆</span>مراحل بازی</button>
+  <button class="menu-btn" onclick="showShop()"><span>🛒</span>فروشگاه توپ</button>
+  <button class="menu-btn" onclick="showWheel()"><span>🎡</span>چرخ شانس</button>
+  <button class="menu-btn" onclick="showMissions()"><span>🎯</span>مأموریت‌ها</button>
+ </div>
+ <div class="panel row">
+  <div><b>🏅 مدال‌های من</b><div class="small">مدال‌های کسب‌شده</div></div>
+  <b id="medals">۰</b>
+ </div>
+ <footer>نسخه آزمایشی بازی · پیشرفت روی همین دستگاه ذخیره می‌شود</footer>
+</section>
+
+<section id="levels" class="screen">
+ <div class="row"><h2>🏆 مراحل بازی</h2><button class="secondary" onclick="show('home')">بازگشت</button></div>
+ <div class="panel"><b id="seasonHeading">فصل اول</b><p class="small">۲۵ مرحله در هر فصل</p></div>
+ <div class="levels" id="levelGrid"></div>
+</section>
+
+<section id="shop" class="screen">
+ <div class="row"><h2>🛒 فروشگاه توپ</h2><button class="secondary" onclick="show('home')">بازگشت</button></div>
+ <div class="panel small">توپ دلخواهت را انتخاب کن. توپ‌های جدید با سکه باز می‌شوند.</div>
+ <div id="shopItems"></div>
+</section>
+
+<section id="wheel" class="screen">
+ <div class="row"><h2>🎡 چرخ شانس</h2><button class="secondary" onclick="show('home')">بازگشت</button></div>
+ <div class="panel" style="text-align:center">
+  <div style="font-size:100px;margin:20px">🎡</div>
+  <h2>شانس خودت را امتحان کن!</h2>
+  <p class="small">هر بار چرخاندن ۵۰ سکه هزینه دارد.</p>
+  <button class="primary" onclick="spinWheel()">چرخاندن چرخ</button>
+  <div id="wheelResult" class="small"></div>
+ </div>
+</section>
+
+<section id="missions" class="screen">
+ <div class="row"><h2>🎯 مأموریت‌ها</h2><button class="secondary" onclick="show('home')">بازگشت</button></div>
+ <div id="missionList"></div>
+</section>
+
+<section id="gameScreen" class="screen">
+ <canvas id="gameCanvas"></canvas>
+ <div class="game-top">
+  <div class="game-pill" id="gameLevel">مرحله ۱</div>
+  <div class="game-pill" id="gameScore">امتیاز: ۰</div>
+  <button class="game-pill" onclick="quitGame()" style="pointer-events:auto;color:white;border:0">✕ خروج</button>
+ </div>
+ <div class="game-controls">
+  <div class="control-hint">👆 صفحه را بکش تا جهت شوت عوض شود</div>
+  <button class="shoot" onclick="kickBall()">شوت! ⚽</button>
+ </div>
+</section>
+
+<div class="overlay" id="modal">
+ <div class="dialog">
+  <div id="modalIcon" style="font-size:55px">⚽</div>
+  <h2 id="modalTitle">نتیجه</h2>
+  <p id="modalText"></p>
+  <button class="primary" id="modalMain" onclick="modalAction()">ادامه</button>
+  <button class="secondary" onclick="closeModal()">بستن</button>
+ </div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const names=["بهار فوتبال","ستاره‌های شهر","قهرمانان","لیگ طلایی","نبرد بزرگ","افسانه‌ها","فوتبال حرفه‌ای","جام جهانی","سلطان زمین","قهرمانی نهایی"];
+const ballTypes=[
+ {name:"توپ کلاسیک",emoji:"⚽",price:0},
+ {name:"توپ آتشین",emoji:"🔥",price:150},
+ {name:"توپ طلایی",emoji:"🌟",price:300},
+ {name:"توپ الماسی",emoji:"💎",price:500},
+ {name:"توپ یخی",emoji:"❄️",price:750},
+ {name:"توپ افسانه‌ای",emoji:"🔮",price:1000}
+];
+let data={level:1,coins:100,score:0,medals:0,shots:0,wins:0,owned:[0],ball:0};
+try{data={...data,...JSON.parse(localStorage.getItem("sarzarb_save")||"{}")}}catch(e){}
+let game={running:false,shot:false,aim:0,ballY:0,ballX:0,keeper:0,obstacles:[],time:0};
+let modalNext="home",canvas=$("gameCanvas"),ctx=canvas.getContext("2d");
+
+function save(){localStorage.setItem("sarzarb_save",JSON.stringify(data));updateHome()}
+function fa(n){return Number(n).toLocaleString("fa-IR")}
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));$(id).classList.add("active")}
+function updateHome(){
+ $("coinCount").textContent=fa(data.coins);
+ $("levelText").textContent="مرحله "+fa(Math.min(data.level,250))+" از ۲۵۰";
+ $("seasonName").textContent="فصل "+fa(Math.ceil(Math.min(data.level,250)/25))+" · "+names[Math.min(9,Math.floor((data.level-1)/25))];
+ $("levelProgress").style.width=((data.level-1)/250*100)+"%";
+ $("medals").textContent=fa(data.medals);
+}
+function startGame(){
+ if(data.level>250){message("🏆","قهرمان نهایی!","تمام ۲۵۰ مرحله را به پایان رسانده‌ای.","home");return}
+ show("gameScreen");resizeCanvas();
+ game={running:true,shot:false,aim:0,ballY:canvas.height*.82,ballX:canvas.width*.5,keeper:(Math.random()-.5)*canvas.width*.25,obstacles:[],time:0};
+ let count=Math.min(4,Math.floor(data.level/12)+1);
+ for(let i=0;i<count;i++)game.obstacles.push({x:canvas.width*(.25+Math.random()*.5),y:canvas.height*(.40+i*.07),r:15});
+ $("gameLevel").textContent="مرحله "+fa(data.level);
+ $("gameScore").textContent="امتیاز: "+fa(data.score);
+ requestAnimationFrame(drawGame);
+}
+function resizeCanvas(){
+ let r=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
+ canvas.width=r.width*dpr;canvas.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function drawGame(){
+ if(!game.running)return;
+ let w=canvas.clientWidth,h=canvas.clientHeight;
+ ctx.clearRect(0,0,w,h);
+ let sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,"#153e31");sky.addColorStop(1,"#071b16");ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
+ // زمین
+ ctx.fillStyle="#18733c";ctx.beginPath();ctx.moveTo(w*.27,h*.18);ctx.lineTo(w*.73,h*.18);ctx.lineTo(w*1.1,h);ctx.lineTo(-w*.1,h);ctx.closePath();ctx.fill();
+ for(let i=0;i<8;i++){
+  let y=h*(.2+i*.1),x1=w*(.27-i*.045),x2=w*(.73+i*.045);
+  ctx.strokeStyle="#ffffff24";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
+ }
+ // خطوط زمین
+ ctx.strokeStyle="#ffffff75";ctx.lineWidth=2;ctx.strokeRect(w*.36,h*.2,w*.28,h*.14);
+ ctx.beginPath();ctx.ellipse(w*.5,h*.56,w*.12,h*.035,0,0,Math.PI*2);ctx.stroke();
+ // دروازه
+ ctx.fillStyle="#ddd";ctx.fillRect(w*.32,h*.16,w*.36,5);
+ ctx.strokeStyle="#fff";ctx.lineWidth=5;ctx.strokeRect(w*.32,h*.12,w*.36,h*.1);
+ ctx.strokeStyle="#ffffff55";ctx.lineWidth=1;
+ for(let i=1;i<7;i++){let x=w*(.32+i*.36/7);ctx.beginPath();ctx.moveTo(x,h*.12);ctx.lineTo(x,h*.22);ctx.stroke()}
+ for(let i=1;i<4;i++){let y=h*(.12+i*.1/4);ctx.beginPath();ctx.moveTo(w*.32,y);ctx.lineTo(w*.68,y);ctx.stroke()}
+ // دروازه بان
+ let kx=w*.5+game.keeper;
+ ctx.fillStyle="#ffdc4d";ctx.beginPath();ctx.arc(kx,h*.25,13,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#1760aa";ctx.fillRect(kx-12,h*.265,24,28);
+ ctx.fillStyle="#fff";ctx.fillRect(kx-23,h*.28,12,7);ctx.fillRect(kx+11,h*.28,12,7);
+ // موانع
+ game.obstacles.forEach(o=>{
+  ctx.fillStyle="#f2a52d";ctx.beginPath();ctx.moveTo(o.x-o.r,o.y+o.r);ctx.lineTo(o.x,o.y-o.r);ctx.lineTo(o.x+o.r,o.y+o.r);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#fff";ctx.fillRect(o.x-8,o.y+3,16,4);
+ });
+ // توپ
+ let bx=game.ballX||w*.5,by=game.ballY||h*.82;
+ ctx.fillStyle="#0005";ctx.beginPath();ctx.ellipse(bx,by+13,20,7,0,0,Math.PI*2);ctx.fill();
+ ctx.font="38px Arial";ctx.textAlign="center";ctx.fillText(ballTypes[data.ball]?.emoji||"⚽",bx,by+12);
+ // جهت
+ if(!game.shot){ctx.strokeStyle="#ffdf55";ctx.setLineDash([5,6]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(bx,by-20);ctx.lineTo(w*.5+game.aim, h*.29);ctx.stroke();ctx.setLineDash([])}
+ if(game.shot){
+  game.time+=1;
+  let t=Math.min(1,game.time/35);
+  let tx=w*.5+game.aim,ty=h*.2;
+  game.ballX=w*.5+(tx-w*.5)*t;game.ballY=h*.82-(h*.62)*t;
+  if(game.time>=35){game.running=false;finishShot(tx,kx);return}
+ }
+ requestAnimationFrame(drawGame);
+}
+let touchStart=null;
+canvas.addEventListener("pointerdown",e=>{touchStart=e.clientX});
+canvas.addEventListener("pointermove",e=>{
+ if(touchStart!==null&&!game.shot){
+  let dx=e.clientX-touchStart;game.aim=Math.max(-canvas.clientWidth*.25,Math.min(canvas.clientWidth*.25,game.aim+dx*.8));touchStart=e.clientX;
+ }
+});
+canvas.addEventListener("pointerup",()=>touchStart=null);
+function kickBall(){
+ if(!game.running||game.shot)return;
+ game.shot=true;game.time=0;data.shots++;save();
+}
+function finishShot(tx,kx){
+ let w=canvas.clientWidth,center=w*.5+game.aim;
+ let blocked=game.obstacles.some(o=>Math.abs(o.x-center)<o.r+12);
+ let keeperHit=Math.abs(center-kx)<w*.055;
+ let goal=Math.abs(center-w*.5)<w*.17&&!blocked&&!keeperHit;
+ if(goal){
+  let reward=25+Math.floor(data.level/2);data.coins+=reward;data.score+=100;data.wins++;data.medals++;
+  data.level=Math.min(251,data.level+1);save();
+  message("⚽","گل شد!","آفرین! "+fa(reward)+" سکه گرفتی. مرحله بعد آماده است.","next");
+ }else{
+  message("🥅","این بار گل نشد!","جهت شوت را تغییر بده و دوباره تلاش کن.","retry");
+ }
+}
+function message(icon,title,txt,next){
+ $("modalIcon").textContent=icon;$("modalTitle").textContent=title;$("modalText").textContent=txt;
+ modalNext=next;$("modal").classList.add("show");
+ $("modalMain").textContent=next==="next"?"مرحله بعد":next==="retry"?"تلاش دوباره":"بازگشت";
+}
+function modalAction(){
+ closeModal();
+ if(modalNext==="next"||modalNext==="retry")startGame();else show("home");
+}
+function closeModal(){$("modal").classList.remove("show")}
+function quitGame(){game.running=false;show("home")}
+function showLevels(){
+ show("levels");$("levelGrid").innerHTML="";
+ let season=Math.ceil(Math.min(data.level,250)/25);
+ $("seasonHeading").textContent="فصل "+fa(season)+" · "+names[season-1];
+ let start=Math.floor((data.level-1)/25)*25+1;
+ for(let i=start;i<Math.min(start+25,251);i++){
+  let b=document.createElement("button");b.className="level "+(i<data.level?"done":i>data.level?"locked":"");
+  b.textContent=(i<data.level?"✓ ": "")+fa(i);
+  b.onclick=()=>{if(i<=data.level){data.level=i;save();startGame()}};
+  $("levelGrid").appendChild(b);
+ }
+}
+function showShop(){
+ show("shop");$("shopItems").innerHTML="";
+ ballTypes.forEach((b,i)=>{
+  let owned=data.owned.includes(i);
+  let div=document.createElement("div");div.className="panel item";
+  div.innerHTML="<div><b>"+b.emoji+" "+b.name+"</b><div class='small'>"+(owned?(data.ball===i?"توپ انتخاب‌شده":"در مالکیت شما"):"قیمت: "+fa(b.price)+" سکه")+"</div></div>";
+  let btn=document.createElement("button");btn.className="secondary";
+  btn.textContent=owned?(data.ball===i?"انتخاب‌شده":"انتخاب"):"خرید";
+  btn.onclick=()=>{
+   if(owned){data.ball=i;save();showShop()}
+   else if(data.coins>=b.price){data.coins-=b.price;data.owned.push(i);data.ball=i;save();showShop()}
+   else alert("سکه کافی نداری!");
+  };
+  div.appendChild(btn);$("shopItems").appendChild(div);
+ });
+}
+function spinWheel(){
+ if(data.coins<50){$("wheelResult").textContent="سکه کافی نداری!";return}
+ data.coins-=50;
+ let prizes=[20,30,50,75,100,150,200],p=prizes[Math.floor(Math.random()*prizes.length)];
+ data.coins+=p;save();$("wheelResult").textContent="🎉 جایزه تو: "+fa(p)+" سکه!";
+}
+function showMissions(){
+ show("missions");
+ let missions=[
+  ["⚽","یک بار شوت بزن",data.shots,1,20],
+  ["🥅","پنج گل به ثمر برسان",data.wins,5,100],
+  ["🏆","سه مرحله را ببر",data.wins,3,60]
+ ];
+ $("missionList").innerHTML="";
+ missions.forEach((m,i)=>{
+  let done=data["mission"+i]||false,ok=m[2]>=m[3];
+  let d=document.createElement("div");d.className="panel";
+  d.innerHTML="<b>"+m[0]+" "+m[1]+"</b><p class='small'>پیشرفت: "+fa(Math.min(m[2],m[3]))+" از "+fa(m[3])+"</p>";
+  let btn=document.createElement("button");btn.className="secondary";btn.textContent=done?"دریافت شد":ok?"دریافت "+fa(m[4])+" سکه":"در حال انجام";
+  btn.disabled=done||!ok;btn.onclick=()=>{data.coins+=m[4];data["mission"+i]=true;save();showMissions()};
+  d.appendChild(btn);$("missionList").appendChild(d);
+ });
+}
+window.addEventListener("resize",()=>{if(game.running)resizeCanvas()});
+updateHome();
+</script>
+</body>
+</html>
