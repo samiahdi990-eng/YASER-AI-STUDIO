@@ -1,6 +1,7 @@
 package com.lifechat.app
 
 import android.app.Activity
+import android.media.AudioManager
 import android.Manifest
 import android.content.pm.PackageManager
 import android.webkit.PermissionRequest
@@ -44,6 +45,12 @@ class MainActivity : Activity() {
     @Suppress("DEPRECATION", "SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // تنظیم حالت صوتی مخصوص تماس
+        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        audioManager.isMicrophoneMute = false
+        audioManager.isSpeakerphoneOn = true
 
         window.decorView.systemUiVisibility =
             View.SYSTEM_UI_FLAG_FULLSCREEN or
@@ -146,6 +153,22 @@ class MainActivity : Activity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        try {
+            val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+            audioManager.mode = AudioManager.MODE_NORMAL
+            audioManager.isSpeakerphoneOn = false
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        if (::webView.isInitialized) {
+            webView.destroy()
+        }
+
+        super.onDestroy()
     }
 
     inner class FirebaseBridge {
