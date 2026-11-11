@@ -17,6 +17,7 @@ import android.view.View
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import org.json.JSONObject
+import org.json.JSONArray
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
@@ -148,6 +149,74 @@ class MainActivity : Activity() {
     }
 
     inner class FirebaseBridge {
+
+        private var userStatsListener: ValueEventListener? = null
+
+        @JavascriptInterface
+        fun loadUserStats() {
+            val user = FirebaseAuth.getInstance().currentUser
+            if (user == null) {
+                status("برای دریافت آمار ابتدا وارد شو.")
+                return
+            }
+
+            val usersRef = db.child("users")
+            val myRef = usersRef.child(user.uid)
+
+            myRef.onDisconnect().updateChildren(
+                mapOf(
+                    "online" to false,
+                    "lastSeen" to ServerValue.TIMESTAMP
+                )
+            )
+
+            myRef.updateChildren(
+                mapOf(
+                    "name" to "کاربر مهمان",
+                    "online" to true,
+                    "lastSeen" to ServerValue.TIMESTAMP
+                )
+            ).addOnFailureListener {
+                status("خطا در ثبت وضعیت کاربر: ${it.localizedMessage}")
+            }
+
+            userStatsListener?.let {
+                usersRef.removeEventListener(it)
+            }
+
+            userStatsListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val onlineUsers = snapshot.children.filter {
+                        it.child("online").getValue(Boolean::class.java) == true
+                    }
+
+                    val usersArray = JSONArray()
+                    onlineUsers.forEach {
+                        usersArray.put(
+                            JSONObject().put(
+                                "name",
+                                it.child("name").getValue(String::class.java)
+                                    ?: "کاربر مهمان"
+                            )
+                        )
+                    }
+
+                    val result = JSONObject()
+                        .put("total", snapshot.childrenCount)
+                        .put("online", onlineUsers.size)
+                        .put("users", usersArray)
+
+                    sendJs("onUserStatsResult", result)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    status("خطای دریافت آمار کاربران: ${error.message}")
+                }
+            }
+
+            usersRef.addValueEventListener(userStatsListener!!)
+        }
+
         @JavascriptInterface
         fun signInAnonymously() {
             val auth = FirebaseAuth.getInstance()
