@@ -1,6 +1,9 @@
 package com.lifechat.app
 
 import android.app.Activity
+import android.Manifest
+import android.content.pm.PackageManager
+import android.webkit.PermissionRequest
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -16,6 +19,8 @@ import org.json.JSONObject
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
+    private var pendingWebPermissionRequest: PermissionRequest? = null
+    private val mediaPermissionRequestCode = 4101
 
     private val db by lazy {
         FirebaseDatabase.getInstance(
@@ -47,11 +52,83 @@ class MainActivity : Activity() {
         webView.settings.domStorageEnabled = true
         webView.settings.cacheMode = WebSettings.LOAD_DEFAULT
         webView.webViewClient = WebViewClient()
-        webView.webChromeClient = WebChromeClient()
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onPermissionRequest(request: PermissionRequest) {
+                runOnUiThread {
+                    val resources = request.resources.filter {
+                        it == PermissionRequest.RESOURCE_VIDEO_CAPTURE ||
+                        it == PermissionRequest.RESOURCE_AUDIO_CAPTURE
+                    }
+
+                    if (resources.isEmpty()) {
+                        request.deny()
+                        return@runOnUiThread
+                    }
+
+                    val missing = mutableListOf<String>()
+
+                    if (PermissionRequest.RESOURCE_VIDEO_CAPTURE in resources &&
+                        checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        missing.add(Manifest.permission.CAMERA)
+                    }
+
+                    if (PermissionRequest.RESOURCE_AUDIO_CAPTURE in resources &&
+                        checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                        missing.add(Manifest.permission.RECORD_AUDIO)
+                    }
+
+                    if (missing.isEmpty()) {
+                        request.grant(resources.toTypedArray())
+                    } else {
+                        pendingWebPermissionRequest?.deny()
+                        pendingWebPermissionRequest = request
+                        requestPermissions(missing.toTypedArray(), mediaPermissionRequestCode)
+                    }
+                }
+            }
+
+            override fun onPermissionRequestCanceled(request: PermissionRequest) {
+                if (pendingWebPermissionRequest == request) {
+                    pendingWebPermissionRequest = null
+                }
+            }
+        }
         webView.addJavascriptInterface(FirebaseBridge(), "FirebaseBridge")
 
         setContentView(webView)
         webView.loadUrl("file:///android_asset/index.html")
+    }
+
+    @Deprecated("Deprecated in Android")
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == mediaPermissionRequestCode) {
+            val request = pendingWebPermissionRequest
+            pendingWebPermissionRequest = null
+
+            if (request != null) {
+                val allowed = request.resources.filter {
+                    when (it) {
+                        PermissionRequest.RESOURCE_VIDEO_CAPTURE ->
+                            checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+                        PermissionRequest.RESOURCE_AUDIO_CAPTURE ->
+                            checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                        else -> false
+                    }
+                }
+
+                if (allowed.isNotEmpty()) {
+                    request.grant(allowed.toTypedArray())
+                } else {
+                    request.deny()
+                }
+            }
+        }
     }
 
     inner class FirebaseBridge {

@@ -2,68 +2,230 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101020">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#090914">
 <title>LIFE CHAT</title>
+
 <style>
+:root {
+  --bg:#090914;
+  --panel:#151528;
+  --panel2:#1c1c35;
+  --purple:#9466ff;
+  --blue:#4b8dff;
+  --text:#fff;
+  --muted:#9696b5;
+  --border:rgba(255,255,255,.08);
+}
 *{box-sizing:border-box}
-body{margin:0;background:#101020;color:#fff;font-family:Tahoma,Arial,sans-serif}
-header{text-align:center;padding:22px}
-.logo{font-size:32px;font-weight:bold;color:#b9a0ff}
-.tag{color:#aaa;font-size:13px;margin-top:8px}
-main{max-width:480px;margin:auto;padding:12px}
-.card{background:#1b1b32;border:1px solid #343451;border-radius:20px;padding:18px;margin-bottom:15px}
-h2{font-size:18px;margin:0 0 15px}
-.status{text-align:center;color:#c2b3ff;font-size:14px;line-height:2;margin:15px 0}
-button{width:100%;padding:15px;border:0;border-radius:13px;font-size:16px;font-weight:bold;margin-top:9px}
-.primary{background:#9270ff;color:white}
-.secondary{background:#30304b;color:white}
-.danger{background:#512b3b;color:#ffb7c8}
-#messages{height:260px;overflow-y:auto;background:#111124;border-radius:14px;padding:10px}
-.msg{background:#30304b;padding:10px 12px;border-radius:12px;margin:7px 0;max-width:85%;overflow-wrap:anywhere}
-.mine{background:#654bc0;margin-right:auto}
-.system{text-align:center;color:#b9a0ff;font-size:12px;margin:10px}
-.sender{font-size:10px;color:#c5b9ff;margin-bottom:5px}
-.sendrow{display:flex;gap:7px;margin-top:10px}
-input{min-width:0;flex:1;padding:13px;border:1px solid #454563;border-radius:12px;background:#111124;color:white;font-size:15px}
-.sendrow button{width:75px;margin:0;background:#9270ff;color:white}
-.info{text-align:center;color:#888;font-size:12px;line-height:2}
-footer{text-align:center;color:#777;padding:15px;font-size:11px}
+body{
+  margin:0;
+  min-height:100vh;
+  color:var(--text);
+  font-family:Tahoma,Arial,sans-serif;
+  background:
+    radial-gradient(ellipse at 10% 5%,rgba(116,65,255,.22),transparent 38%),
+    radial-gradient(ellipse at 95% 45%,rgba(45,105,255,.13),transparent 35%),
+    var(--bg);
+}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{max-width:520px;margin:auto;padding:16px 15px 35px}
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 3px 23px;
+}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{
+  width:48px;height:48px;border-radius:16px;
+  display:grid;place-items:center;font-size:24px;font-weight:bold;
+  background:linear-gradient(145deg,#a77aff,#5942d8);
+  box-shadow:0 7px 28px #805aff55;
+}
+.brand-name{font-size:21px;font-weight:900;letter-spacing:1px}
+.brand-sub{font-size:10px;color:var(--muted);margin-top:5px}
+.online{
+  display:flex;align-items:center;gap:7px;
+  padding:9px 12px;border:1px solid var(--border);
+  background:#ffffff08;border-radius:30px;color:#c7c7dc;font-size:11px
+}
+.dot{width:8px;height:8px;border-radius:50%;background:#35dc9a;box-shadow:0 0 10px #35dc9a}
+.hero{
+  position:relative;overflow:hidden;text-align:center;
+  padding:27px 19px 23px;border-radius:27px;
+  border:1px solid #a78aff30;
+  background:linear-gradient(145deg,#29204b,#17172e 65%,#171d3b);
+  box-shadow:0 18px 50px #0005;
+}
+.hero:before{
+  content:"";position:absolute;width:210px;height:210px;
+  border-radius:50%;background:#8659ff24;filter:blur(35px);
+  top:-100px;right:-60px;
+}
+.hero-content{position:relative}
+.orb{
+  width:105px;height:105px;margin:0 auto 17px;
+  border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(145deg,#a47aff,#5844d5);
+  box-shadow:0 0 0 12px #a27aff12,0 0 45px #885dff70;
+  font-size:42px;animation:float 3s ease-in-out infinite;
+}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.hero h1{font-size:23px;margin:0 0 9px}
+.hero p{font-size:12px;color:#c3bddc;line-height:2;margin:0}
+.status-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:18px;padding:9px 15px;border-radius:30px;
+  background:#ffffff0d;border:1px solid #ffffff12;
+  color:#ded7ff;font-size:11px
+}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:19px}
+.btn{
+  border:0;border-radius:14px;padding:15px 9px;
+  font-size:13px;font-weight:bold;transition:.2s;
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{
+  grid-column:1/-1;color:white;
+  background:linear-gradient(110deg,#9b6aff,#6650e9);
+  box-shadow:0 8px 24px #805cff40;
+}
+.btn-next{color:#e5dcff;background:#ffffff12;border:1px solid #ffffff18}
+.btn-stop{color:#ffb9c8;background:#ff526d14;border:1px solid #ff526d25}
+.section-title{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:25px 3px 13px;
+}
+.section-title h2{font-size:15px;margin:0}
+.section-title span{font-size:10px;color:var(--muted)}
+.chat-card{
+  border:1px solid var(--border);border-radius:22px;
+  background:linear-gradient(145deg,#19192e,#121222);
+  padding:14px;box-shadow:0 12px 35px #0003;
+}
+.chat-top{display:flex;align-items:center;gap:11px;padding:3px 2px 13px}
+.avatar{
+  width:42px;height:42px;border-radius:14px;
+  display:grid;place-items:center;font-size:19px;
+  background:linear-gradient(145deg,#4e4a91,#292c56);
+}
+.chat-person{flex:1}
+.chat-person strong{font-size:12px;display:block}
+.chat-person small{font-size:10px;color:var(--muted);display:block;margin-top:5px}
+.chat-live{font-size:10px;color:#43dda5}
+#messages{
+  height:265px;overflow-y:auto;padding:12px 9px;
+  border-radius:15px;background:#0b0b18;
+  border:1px solid #ffffff08;scroll-behavior:smooth;
+}
+#messages::-webkit-scrollbar{width:4px}
+#messages::-webkit-scrollbar-thumb{background:#57458a;border-radius:8px}
+.system{text-align:center;color:#a9a0cf;font-size:10px;margin:12px 0}
+.msg{
+  width:fit-content;max-width:85%;padding:10px 12px;
+  border-radius:15px 15px 4px 15px;background:#252541;
+  margin:8px 0;font-size:12px;line-height:1.9;
+  overflow-wrap:anywhere;animation:appear .2s ease;
+}
+.msg.mine{
+  margin-right:auto;margin-left:0;
+  background:linear-gradient(130deg,#7656d9,#5544ae);
+  border-radius:15px 15px 15px 4px;
+}
+@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.sender{font-size:9px;color:#d0c3ff;margin-bottom:3px}
+.sendrow{display:flex;gap:8px;margin-top:11px}
+#messageInput{
+  min-width:0;flex:1;padding:14px;border-radius:13px;
+  color:white;background:#101020;border:1px solid #343451;
+  outline:none;font-size:12px;
+}
+#messageInput:focus{border-color:#9069ff}
+.sendrow button{
+  width:53px;border:0;border-radius:13px;
+  color:white;background:linear-gradient(140deg,#9668ff,#6550db);
+  font-size:19px;
+}
+.feature{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:16px
+}
+.feature-item{
+  text-align:center;padding:14px 5px;border-radius:15px;
+  background:#ffffff08;border:1px solid var(--border)
+}
+.feature-item b{display:block;font-size:19px;margin-bottom:7px}
+.feature-item span{font-size:9px;color:var(--muted)}
+footer{text-align:center;color:#686884;font-size:10px;padding:25px 0 5px}
 </style>
 </head>
+
 <body>
+<div class="app">
+
 <header>
-  <div class="logo">LIFE CHAT</div>
-  <div class="tag">با آدم‌های جدید آشنا شو</div>
+  <div class="brand">
+    <div class="logo">L</div>
+    <div>
+      <div class="brand-name">LIFE CHAT</div>
+      <div class="brand-sub">ارتباطی تازه، دوستی تازه</div>
+    </div>
+  </div>
+  <div class="online"><span class="dot"></span> آنلاین</div>
 </header>
 
-<main>
-  <section class="card">
-    <h2>گفت‌وگوی تصادفی</h2>
-    <div class="status" id="status">برای پیدا کردن یک دوست آماده‌ای؟</div>
-    <button class="primary" onclick="startChat()">شروع جستجوی دوست</button>
-    <button class="secondary" onclick="nextChat()">نفر بعدی</button>
-    <button class="danger" onclick="stopChat()">قطع اتصال</button>
-  </section>
-
-  <section class="card">
-    <h2>پیام‌های زنده</h2>
-    <div id="messages">
-      <div class="system">پس از اتصال، پیام‌ها اینجا نمایش داده می‌شوند.</div>
+<section class="hero">
+  <div class="hero-content">
+    <div class="orb">✦</div>
+    <h1>دنیای جدیدی از دوستی</h1>
+    <p>با افراد جدید آشنا شو، گفتگو کن و لحظه‌های تازه بساز.</p>
+    <div class="status-pill">
+      <span class="dot"></span>
+      <span id="status">برای شروع آماده‌ای؟</span>
     </div>
-    <div class="sendrow">
-      <input id="messageInput" maxlength="1000" placeholder="پیامت را بنویس...">
-      <button onclick="sendMessage()">ارسال</button>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="startChat()">✦　شروع جستجوی دوست</button>
+      <button class="btn btn-next" onclick="nextChat()">↻　نفر بعدی</button>
+      <button class="btn btn-stop" onclick="stopChat()">■　قطع اتصال</button>
     </div>
-  </section>
-
-  <div class="info">
-    LIFE CHAT نسخه آزمایشی<br>
-    چت متنی آنلاین دونفره
   </div>
-</main>
+</section>
 
-<footer>L I F E &nbsp; C H A T</footer>
+<div class="feature">
+  <div class="feature-item"><b>✦</b><span>آشنایی تصادفی</span></div>
+  <div class="feature-item"><b>◉</b><span>گفتگوی آنلاین</span></div>
+  <div class="feature-item"><b>♡</b><span>دوستی جدید</span></div>
+</div>
+
+<div class="section-title">
+  <h2>پیام‌های زنده</h2>
+  <span>گفتگوی خصوصی دونفره</span>
+</div>
+
+<section class="chat-card">
+  <div class="chat-top">
+    <div class="avatar">👤</div>
+    <div class="chat-person">
+      <strong>دوست شما</strong>
+      <small>گفتگوی تصادفی LIFE CHAT</small>
+    </div>
+    <span class="chat-live">● LIVE</span>
+  </div>
+
+  <div id="messages">
+    <div class="system">✦ پس از اتصال، گفتگو از اینجا آغاز می‌شود ✦</div>
+  </div>
+
+  <div class="sendrow">
+    <input id="messageInput" maxlength="1000" placeholder="پیامت را اینجا بنویس...">
+    <button onclick="sendMessage()" aria-label="ارسال پیام">➤</button>
+  </div>
+</section>
+
+<footer>
+  LIFE CHAT · ارتباطی فراتر از فاصله‌ها
+</footer>
+
+</div>
 
 <script>
 const statusBox = document.getElementById('status');
@@ -106,7 +268,7 @@ window.onMatchResult = function(raw) {
     connected = true;
     statusBox.textContent = 'به یک دوست وصل شدی! حالا پیام بده.';
     messagesBox.innerHTML = '';
-    addSystemMessage('اتصال دونفره برقرار شد.');
+    addSystemMessage('اتصال دونفره برقرار شد. ✦');
 };
 
 window.onIncomingMessage = function(raw) {
@@ -161,6 +323,7 @@ function sendMessage() {
 
 function nextChat() {
     if (!window.FirebaseBridge) return;
+
     connected = false;
     messagesBox.innerHTML = '';
     statusBox.textContent = 'در حال جستجوی نفر بعدی...';
@@ -169,6 +332,7 @@ function nextChat() {
 
 function stopChat() {
     if (!window.FirebaseBridge) return;
+
     connected = false;
     FirebaseBridge.stopChat();
 }
