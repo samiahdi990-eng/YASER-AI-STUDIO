@@ -132,50 +132,46 @@ class MainActivity : Activity() {
         private fun attemptClaim(myUid: String, candidate: String) {
             if (!attempting.add(candidate)) return
 
-            db.child("claims").child(candidate).get()
-                .addOnSuccessListener { existing ->
-                    if (existing.exists() || activeRoom != null) {
-                        attempting.remove(candidate)
-                        return@addOnSuccessListener
-                    }
+            if (activeRoom != null) {
+                attempting.remove(candidate)
+                return
+            }
 
-                    val roomId = db.child("rooms").push().key
-                    if (roomId == null) {
-                        attempting.remove(candidate)
-                        return@addOnSuccessListener
-                    }
+            val roomId = db.child("rooms").push().key
+            if (roomId == null) {
+                attempting.remove(candidate)
+                return
+            }
 
-                    val claim = mapOf(
-                        "from" to myUid,
-                        "roomId" to roomId,
-                        "createdAt" to ServerValue.TIMESTAMP
+            val claim = mapOf(
+                "from" to myUid,
+                "roomId" to roomId,
+                "createdAt" to ServerValue.TIMESTAMP
+            )
+
+            db.child("claims").child(candidate).setValue(claim)
+                .addOnSuccessListener {
+                    val room = mapOf(
+                        "targetUid" to candidate,
+                        "createdAt" to ServerValue.TIMESTAMP,
+                        "members" to mapOf(
+                            myUid to true,
+                            candidate to true
+                        )
                     )
 
-                    db.child("claims").child(candidate).setValue(claim)
+                    db.child("rooms").child(roomId).setValue(room)
                         .addOnSuccessListener {
-                            val room = mapOf(
-                                "targetUid" to candidate,
-                                "createdAt" to ServerValue.TIMESTAMP,
-                                "members" to mapOf(
-                                    myUid to true,
-                                    candidate to true
-                                )
-                            )
-
-                            db.child("rooms").child(roomId).setValue(room)
-                                .addOnSuccessListener {
-                                    activateRoom(roomId, candidate)
-                                }
-                                .addOnFailureListener {
-                                    status("ساخت اتاق ناموفق بود: ${it.localizedMessage}")
-                                }
+                            activateRoom(roomId, candidate)
                         }
                         .addOnFailureListener {
                             attempting.remove(candidate)
+                            status("ساخت اتاق ناموفق بود: ${it.localizedMessage}")
                         }
                 }
                 .addOnFailureListener {
                     attempting.remove(candidate)
+                    status("ثبت درخواست اتصال ناموفق بود: ${it.localizedMessage}")
                 }
         }
 
