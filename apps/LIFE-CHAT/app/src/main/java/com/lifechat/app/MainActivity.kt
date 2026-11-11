@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.WebViewAssetLoader
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.JavascriptInterface
@@ -35,6 +36,7 @@ class MainActivity : Activity() {
     private var waitingListener: ValueEventListener? = null
     private var claimListener: ValueEventListener? = null
     private var messagesListener: ChildEventListener? = null
+    private var signalsListener: ChildEventListener? = null
     private var pendingRoomListener: ValueEventListener? = null
     private var pendingRoomRef: DatabaseReference? = null
 
@@ -51,7 +53,21 @@ class MainActivity : Activity() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.settings.cacheMode = WebSettings.LOAD_DEFAULT
-        webView.webViewClient = WebViewClient()
+        val assetLoader = WebViewAssetLoader.Builder()
+            .addPathHandler(
+                "/assets/",
+                WebViewAssetLoader.AssetsPathHandler(this)
+            )
+            .build()
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: android.webkit.WebResourceRequest
+            ): android.webkit.WebResourceResponse? {
+                return assetLoader.shouldInterceptRequest(request.url)
+            }
+        }
         webView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
                 runOnUiThread {
@@ -96,7 +112,7 @@ class MainActivity : Activity() {
         webView.addJavascriptInterface(FirebaseBridge(), "FirebaseBridge")
 
         setContentView(webView)
-        webView.loadUrl("file:///android_asset/index.html")
+        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")
     }
 
     @Deprecated("Deprecated in Android")
@@ -335,6 +351,7 @@ class MainActivity : Activity() {
                 .put("partnerUid", partner))
 
             listenForMessages(roomId)
+            listenForSignals(roomId)
         }
 
         private fun listenForMessages(roomId: String) {
@@ -361,6 +378,63 @@ class MainActivity : Activity() {
 
             db.child("rooms").child(roomId).child("messages")
                 .addChildEventListener(messagesListener!!)
+        }
+
+        @JavascriptInterface
+        fun sendSignal(type: String, payload: String) {
+            val roomId = activeRoom
+            val user = FirebaseAuth.getInstance().currentUser
+
+            if (roomId == null || user == null) return
+            if (type !in listOf("offer", "answer", "candidate", "hangup")) return
+            if (payload.length > 20000) return
+
+            val signal = mapOf(
+                "from" to user.uid,
+                "type" to type,
+                "payload" to payload,
+                "createdAt" to ServerValue.TIMESTAMP
+            )
+
+            db.child("rooms").child(roomId).child("signals")
+                .push().setValue(signal)
+                .addOnFailureListener {
+                    status("ارسال اطلاعات تماس ناموفق بود: ${it.localizedMessage}")
+                }
+        }
+
+        private fun listenForSignals(roomId: String) {
+            signalsListener?.let {
+                db.child("rooms").child(roomId).child("signals")
+                    .removeEventListener(it)
+            }
+
+            signalsListener = object : ChildEventListener {
+                override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                    val from = snapshot.child("from").getValue(String::class.java) ?: return
+                    val type = snapshot.child("type").getValue(String::class.java) ?: return
+                    val payload = snapshot.child("payload").getValue(String::class.java) ?: ""
+
+                    if (from == uid) return
+
+                    val data = JSONObject()
+                        .put("from", from)
+                        .put("type", type)
+                        .put("payload", payload)
+
+                    sendJs("onIncomingSignal", data)
+                }
+
+                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+                override fun onChildRemoved(snapshot: DataSnapshot) {}
+                override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+                override fun onCancelled(error: DatabaseError) {
+                    status("خطای دریافت اطلاعات تماس: ${error.message}")
+                }
+            }
+
+            db.child("rooms").child(roomId).child("signals")
+                .addChildEventListener(signalsListener!!)
         }
 
         @JavascriptInterface
@@ -427,6 +501,10 @@ class MainActivity : Activity() {
 
         private fun cleanupMessageListener() {
             val room = activeRoom ?: return
+            signalsListener?.let {
+                db.child("rooms").child(room).child("signals").removeEventListener(it)
+            }
+            signalsListener = null
             messagesListener?.let {
                 db.child("rooms").child(room).child("messages").removeEventListener(it)
             }

@@ -1,0 +1,45 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "waiting": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['createdAt']) && newData.child('createdAt').isNumber()"
+      }
+    },
+    "claims": {
+      "$targetUid": {
+        ".read": "auth != null && (auth.uid === $targetUid || auth.uid === data.child('from').val())",
+        ".write": "auth != null && ((auth.uid !== $targetUid && root.child('waiting').child($targetUid).exists() && root.child('waiting').child(auth.uid).exists() && !data.exists() && newData.child('from').val() === auth.uid && newData.child('roomId').isString() && newData.child('createdAt').isNumber()) || (data.exists() && !newData.exists() && (auth.uid === $targetUid || auth.uid === data.child('from').val())))"
+      }
+    },
+    "rooms": {
+      "$roomId": {
+        ".read": "auth != null && data.child('members').child(auth.uid).val() === true",
+        ".write": "auth != null && !data.exists() && newData.child('members').child(auth.uid).val() === true && newData.child('targetUid').isString() && newData.child('members').child(newData.child('targetUid').val()).val() === true && root.child('claims').child(newData.child('targetUid').val()).child('from').val() === auth.uid && root.child('claims').child(newData.child('targetUid').val()).child('roomId').val() === $roomId",
+        "messages": {
+          ".read": "auth != null && root.child('rooms').child($roomId).child('members').child(auth.uid).val() === true",
+          "$messageId": {
+            ".write": "auth != null && root.child('rooms').child($roomId).child('members').child(auth.uid).val() === true && ((!data.exists() && newData.child('from').val() === auth.uid) || (data.exists() && data.child('from').val() === auth.uid && !newData.exists()))",
+            ".validate": "newData.hasChildren(['from','text','createdAt']) && newData.child('from').val() === auth.uid && newData.child('text').isString() && newData.child('text').val().length <= 1000 && newData.child('createdAt').isNumber()"
+          }
+        },
+        "signals": {
+          ".read": "auth != null && root.child('rooms').child($roomId).child('members').child(auth.uid).val() === true",
+          "$signalId": {
+            ".write": "auth != null && root.child('rooms').child($roomId).child('members').child(auth.uid).val() === true && newData.child('from').val() === auth.uid",
+            ".validate": "newData.hasChildren(['from','type','payload','createdAt']) && newData.child('from').isString() && (newData.child('type').val() === 'offer' || newData.child('type').val() === 'answer' || newData.child('type').val() === 'candidate' || newData.child('type').val() === 'hangup') && newData.child('payload').isString() && newData.child('payload').val().length <= 20000 && newData.child('createdAt').isNumber()"
+          }
+        }
+      }
+    },
+    "matches": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && newData.hasChildren(['roomId','partnerUid']) && root.child('rooms').child(newData.child('roomId').val()).child('members').child(auth.uid).val() === true && root.child('rooms').child(newData.child('roomId').val()).child(newData.child('partnerUid').val()).val() === true"
+      }
+    }
+  }
+}

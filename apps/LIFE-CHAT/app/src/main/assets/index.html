@@ -156,6 +156,45 @@ header{
 .feature-item b{display:block;font-size:19px;margin-bottom:7px}
 .feature-item span{font-size:9px;color:var(--muted)}
 footer{text-align:center;color:#686884;font-size:10px;padding:25px 0 5px}
+
+/* LIFE CHAT VIDEO CALL */
+.video-card{
+  margin-top:18px;padding:14px;border-radius:22px;
+  background:linear-gradient(145deg,#19192e,#121222);
+  border:1px solid var(--border);
+}
+.video-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:9px;
+}
+.video-box{
+  position:relative;overflow:hidden;aspect-ratio:3/4;
+  background:#080812;border-radius:15px;
+  border:1px solid #ffffff18;
+}
+.video-box video{
+  width:100%;height:100%;object-fit:cover;
+}
+.video-label{
+  position:absolute;bottom:8px;right:8px;
+  padding:6px 9px;border-radius:10px;
+  background:#0009;font-size:10px;
+}
+.video-controls{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;
+}
+.video-controls button{
+  flex:1;min-width:95px;border:0;border-radius:12px;
+  padding:12px 8px;color:white;background:#ffffff15;
+  font-size:11px;font-weight:bold;
+}
+.video-controls .video-start{
+  background:linear-gradient(110deg,#9568ff,#6550dc);
+}
+#videoStatus{
+  color:#c9bde9;font-size:11px;text-align:center;
+  line-height:2;margin-top:10px;
+}
+
 </style>
 </head>
 
@@ -221,6 +260,34 @@ footer{text-align:center;color:#686884;font-size:10px;padding:25px 0 5px}
   </div>
 </section>
 
+
+<div class="section-title">
+  <h2>تماس تصویری زنده</h2>
+  <span>ارتباط تصویری دونفره</span>
+</div>
+
+<section class="video-card">
+  <div class="video-grid">
+    <div class="video-box">
+      <video id="localVideo" autoplay muted playsinline></video>
+      <span class="video-label">دوربین شما</span>
+    </div>
+    <div class="video-box">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <span class="video-label">دوست شما</span>
+    </div>
+  </div>
+
+  <div id="videoStatus">پس از اتصال به دوست، تماس تصویری را شروع کن.</div>
+
+  <div class="video-controls">
+    <button class="video-start" onclick="startVideo()">📹 شروع تماس</button>
+    <button onclick="toggleCamera()">◉ دوربین</button>
+    <button onclick="toggleMic()">🎙 میکروفون</button>
+    <button onclick="hangupVideo()">✕ قطع تماس</button>
+  </div>
+</section>
+
 <footer>
   LIFE CHAT · ارتباطی فراتر از فاصله‌ها
 </footer>
@@ -266,7 +333,9 @@ window.onQueueStatus = function(raw) {
 window.onMatchResult = function(raw) {
     const data = JSON.parse(raw);
     connected = true;
+    partnerUid = data.partnerUid || '';
     statusBox.textContent = 'به یک دوست وصل شدی! حالا پیام بده.';
+    videoMessage('اتصال برقرار شد؛ برای تماس تصویری دکمه شروع تماس را بزن.');
     messagesBox.innerHTML = '';
     addSystemMessage('اتصال دونفره برقرار شد. ✦');
 };
@@ -277,7 +346,9 @@ window.onIncomingMessage = function(raw) {
 };
 
 window.onChatStopped = function() {
+    closeVideo(false);
     connected = false;
+    partnerUid = '';
     messagesBox.innerHTML = '';
     addSystemMessage('اتصال متوقف شد.');
 };
@@ -324,7 +395,9 @@ function sendMessage() {
 function nextChat() {
     if (!window.FirebaseBridge) return;
 
+    closeVideo(true);
     connected = false;
+    partnerUid = '';
     messagesBox.innerHTML = '';
     statusBox.textContent = 'در حال جستجوی نفر بعدی...';
     FirebaseBridge.nextChat();
@@ -333,9 +406,268 @@ function nextChat() {
 function stopChat() {
     if (!window.FirebaseBridge) return;
 
+    closeVideo(true);
     connected = false;
+    partnerUid = '';
     FirebaseBridge.stopChat();
 }
+
+
+// ===== LIFE CHAT WEBRTC =====
+const localVideo = document.getElementById('localVideo');
+const remoteVideo = document.getElementById('remoteVideo');
+const videoStatus = document.getElementById('videoStatus');
+
+let partnerUid = '';
+let peerConnection = null;
+let localStream = null;
+let pendingCandidates = [];
+let videoStarting = false;
+
+const rtcConfig = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' }
+    ]
+};
+
+function videoMessage(text) {
+    videoStatus.textContent = text;
+}
+
+function sendRtcSignal(type, payload) {
+    if (!connected || !window.FirebaseBridge) return;
+
+    try {
+        FirebaseBridge.sendSignal(type, JSON.stringify(payload));
+    } catch (e) {
+        videoMessage('خطا در ارسال اطلاعات تماس: ' + e.message);
+    }
+}
+
+async function prepareVideo() {
+    if (localStream) return;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('دسترسی دوربین در این WebView پشتیبانی نمی‌شود.');
+    }
+
+    localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: {
+            facingMode: 'user',
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+        }
+    });
+
+    localVideo.srcObject = localStream;
+    await localVideo.play().catch(() => {});
+}
+
+function createPeerConnection() {
+    if (peerConnection) return peerConnection;
+
+    peerConnection = new RTCPeerConnection(rtcConfig);
+
+    localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
+    });
+
+    peerConnection.onicecandidate = event => {
+        if (event.candidate) {
+            sendRtcSignal('candidate', event.candidate.toJSON());
+        }
+    };
+
+    peerConnection.ontrack = event => {
+        if (event.streams && event.streams[0]) {
+            remoteVideo.srcObject = event.streams[0];
+            remoteVideo.play().catch(() => {});
+            videoMessage('تصویر دوستت دریافت شد. ✦');
+        }
+    };
+
+    peerConnection.onconnectionstatechange = () => {
+        const state = peerConnection?.connectionState;
+
+        if (state === 'connected') {
+            videoMessage('تماس تصویری برقرار است. ✦');
+        } else if (state === 'connecting') {
+            videoMessage('در حال برقراری تماس تصویری...');
+        } else if (state === 'failed') {
+            videoMessage('اتصال ناموفق؛ ممکن است سرور TURN لازم باشد.');
+        } else if (state === 'disconnected') {
+            videoMessage('ارتباط تصویری قطع شده است.');
+        }
+    };
+
+    return peerConnection;
+}
+
+async function startVideo() {
+    if (!connected || !partnerUid) {
+        videoMessage('ابتدا باید به یک دوست وصل شوی.');
+        return;
+    }
+
+    if (videoStarting || peerConnection?.connectionState === 'connected') return;
+
+    videoStarting = true;
+
+    try {
+        await prepareVideo();
+        const pc = createPeerConnection();
+
+        if (myUid < partnerUid && !pc.localDescription) {
+            videoMessage('در حال شروع تماس تصویری...');
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            sendRtcSignal('offer', {
+                type: offer.type,
+                sdp: offer.sdp
+            });
+        } else {
+            videoMessage('دوربین فعال شد؛ منتظر تماس دوستت هستیم.');
+        }
+    } catch (e) {
+        videoMessage('خطای دوربین یا میکروفون: ' + e.message);
+    } finally {
+        videoStarting = false;
+    }
+}
+
+async function flushCandidates() {
+    if (!peerConnection?.remoteDescription) return;
+
+    const items = pendingCandidates;
+    pendingCandidates = [];
+
+    for (const candidate of items) {
+        try {
+            await peerConnection.addIceCandidate(
+                new RTCIceCandidate(candidate)
+            );
+        } catch (e) {
+            console.log('ICE candidate error:', e);
+        }
+    }
+}
+
+window.onIncomingSignal = async function(raw) {
+    try {
+        const signal = JSON.parse(raw);
+
+        if (signal.from === myUid) return;
+
+        const payload = JSON.parse(signal.payload || '{}');
+
+        if (signal.type === 'hangup') {
+            closeVideo(false);
+            videoMessage('دوستت تماس تصویری را قطع کرد.');
+            return;
+        }
+
+        if (signal.type === 'offer') {
+            await prepareVideo();
+
+            const pc = createPeerConnection();
+
+            await pc.setRemoteDescription(
+                new RTCSessionDescription(payload)
+            );
+
+            await flushCandidates();
+
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+
+            sendRtcSignal('answer', {
+                type: answer.type,
+                sdp: answer.sdp
+            });
+
+            videoMessage('در حال اتصال تصویر دوستت...');
+        }
+
+        else if (signal.type === 'answer') {
+            if (!peerConnection) return;
+
+            await peerConnection.setRemoteDescription(
+                new RTCSessionDescription(payload)
+            );
+
+            await flushCandidates();
+            videoMessage('پاسخ تماس دریافت شد؛ در حال اتصال...');
+        }
+
+        else if (signal.type === 'candidate') {
+            if (peerConnection?.remoteDescription) {
+                await peerConnection.addIceCandidate(
+                    new RTCIceCandidate(payload)
+                );
+            } else {
+                pendingCandidates.push(payload);
+            }
+        }
+    } catch (e) {
+        videoMessage('خطا در دریافت سیگنال تماس: ' + e.message);
+    }
+};
+
+function toggleCamera() {
+    if (!localStream) {
+        videoMessage('ابتدا تماس تصویری را شروع کن.');
+        return;
+    }
+
+    const track = localStream.getVideoTracks()[0];
+    if (track) {
+        track.enabled = !track.enabled;
+        videoMessage(track.enabled ? 'دوربین روشن شد.' : 'دوربین خاموش شد.');
+    }
+}
+
+function toggleMic() {
+    if (!localStream) {
+        videoMessage('ابتدا تماس تصویری را شروع کن.');
+        return;
+    }
+
+    const track = localStream.getAudioTracks()[0];
+    if (track) {
+        track.enabled = !track.enabled;
+        videoMessage(track.enabled ? 'میکروفون روشن شد.' : 'میکروفون خاموش شد.');
+    }
+}
+
+function closeVideo(sendSignal) {
+    if (sendSignal && peerConnection) {
+        window.FirebaseBridge?.sendSignal('hangup', '{}');
+    }
+
+    if (peerConnection) {
+        peerConnection.ontrack = null;
+        peerConnection.onicecandidate = null;
+        peerConnection.close();
+        peerConnection = null;
+    }
+
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+
+    localVideo.srcObject = null;
+    remoteVideo.srcObject = null;
+    pendingCandidates = [];
+}
+
+function hangupVideo() {
+    closeVideo(true);
+    videoMessage('تماس تصویری قطع شد.');
+}
+
 
 messageInput.addEventListener('keydown', function(event) {
     if (event.key === 'Enter') sendMessage();
