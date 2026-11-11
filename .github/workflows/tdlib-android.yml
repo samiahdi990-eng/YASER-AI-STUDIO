@@ -1,0 +1,46 @@
+name: Build Official TDLib for Android
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-tdlib:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout LIFE CHAT repository
+        uses: actions/checkout@v4
+
+      - name: Checkout official TDLib
+        uses: actions/checkout@v4
+        with:
+          repository: tdlib/td
+          ref: master
+          path: tdlib-source
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build TDLib Android libraries
+        run: |
+          mkdir -p tdlib-output
+          docker buildx build \
+            --platform linux/amd64 \
+            --output type=local,dest=tdlib-output \
+            -f tdlib-source/example/android/Dockerfile \
+            tdlib-source/example/android
+
+      - name: Verify TDLib archives
+        run: |
+          test -s tdlib-output/tdlib.zip
+          test -s tdlib-output/tdlib-debug.zip
+          ls -lh tdlib-output/
+
+      - name: Upload TDLib
+        uses: actions/upload-artifact@v4
+        with:
+          name: LIFE-CHAT-TDLib-Android
+          path: tdlib-output/*.zip
+          retention-days: 14
