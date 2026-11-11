@@ -8,22 +8,27 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101020;color:#fff;font-family:Tahoma,Arial,sans-serif}
-header{padding:25px 20px;text-align:center}
-.logo{font-size:34px;font-weight:900;letter-spacing:2px;color:#b9a0ff}
-.tag{color:#aaa;margin-top:9px;font-size:13px}
-.poster{width:100%;display:block;border-radius:20px;margin:0 auto 18px;box-shadow:0 5px 25px #9270ff44}
-main{padding:15px;max-width:480px;margin:auto}
-.card{background:#1b1b32;border:1px solid #343451;border-radius:22px;padding:20px;margin-bottom:17px}
-h2{font-size:18px;margin:0 0 14px}
-.video{height:230px;border-radius:17px;background:linear-gradient(145deg,#29294a,#15152a);display:flex;align-items:center;justify-content:center;text-align:center;color:#aaa}
-.camera{font-size:48px;display:block;margin-bottom:12px}
-.status{text-align:center;color:#c2b3ff;font-size:14px;margin:17px 0}
-button{width:100%;padding:16px;border:0;border-radius:14px;font-size:16px;font-weight:bold;margin-top:10px;cursor:pointer}
+header{text-align:center;padding:22px}
+.logo{font-size:32px;font-weight:bold;color:#b9a0ff}
+.tag{color:#aaa;font-size:13px;margin-top:8px}
+main{max-width:480px;margin:auto;padding:12px}
+.card{background:#1b1b32;border:1px solid #343451;border-radius:20px;padding:18px;margin-bottom:15px}
+h2{font-size:18px;margin:0 0 15px}
+.status{text-align:center;color:#c2b3ff;font-size:14px;line-height:2;margin:15px 0}
+button{width:100%;padding:15px;border:0;border-radius:13px;font-size:16px;font-weight:bold;margin-top:9px}
 .primary{background:#9270ff;color:white}
 .secondary{background:#30304b;color:white}
 .danger{background:#512b3b;color:#ffb7c8}
-.info{font-size:12px;color:#aaa;line-height:2;text-align:center;margin-top:18px}
-footer{text-align:center;color:#777;font-size:11px;padding:15px}
+#messages{height:260px;overflow-y:auto;background:#111124;border-radius:14px;padding:10px}
+.msg{background:#30304b;padding:10px 12px;border-radius:12px;margin:7px 0;max-width:85%;overflow-wrap:anywhere}
+.mine{background:#654bc0;margin-right:auto}
+.system{text-align:center;color:#b9a0ff;font-size:12px;margin:10px}
+.sender{font-size:10px;color:#c5b9ff;margin-bottom:5px}
+.sendrow{display:flex;gap:7px;margin-top:10px}
+input{min-width:0;flex:1;padding:13px;border:1px solid #454563;border-radius:12px;background:#111124;color:white;font-size:15px}
+.sendrow button{width:75px;margin:0;background:#9270ff;color:white}
+.info{text-align:center;color:#888;font-size:12px;line-height:2}
+footer{text-align:center;color:#777;padding:15px;font-size:11px}
 </style>
 </head>
 <body>
@@ -31,33 +36,42 @@ footer{text-align:center;color:#777;font-size:11px;padding:15px}
   <div class="logo">LIFE CHAT</div>
   <div class="tag">با آدم‌های جدید آشنا شو</div>
 </header>
+
 <main>
-  <img class="poster" src="life-chat-poster.png" alt="LIFE CHAT">
   <section class="card">
-    <h2>گفت‌وگوی تصویری تصادفی</h2>
-    <div class="video">
-      <div><span class="camera">📹</span>اتاق گفت‌وگوی شما<br>در انتظار اتصال</div>
-    </div>
-    <div class="status" id="status">برای شروع آماده‌ای؟</div>
+    <h2>گفت‌وگوی تصادفی</h2>
+    <div class="status" id="status">برای پیدا کردن یک دوست آماده‌ای؟</div>
     <button class="primary" onclick="startChat()">شروع جستجوی دوست</button>
     <button class="secondary" onclick="nextChat()">نفر بعدی</button>
     <button class="danger" onclick="stopChat()">قطع اتصال</button>
   </section>
+
   <section class="card">
-    <h2>امکانات LIFE CHAT</h2>
-    <div class="info">
-      اتصال تصادفی دونفره<br>
-      تماس تصویری و صوتی<br>
-      گفت‌وگوی متنی<br>
-      امکان گزارش و مسدودسازی کاربران
+    <h2>پیام‌های زنده</h2>
+    <div id="messages">
+      <div class="system">پس از اتصال، پیام‌ها اینجا نمایش داده می‌شوند.</div>
+    </div>
+    <div class="sendrow">
+      <input id="messageInput" maxlength="1000" placeholder="پیامت را بنویس...">
+      <button onclick="sendMessage()">ارسال</button>
     </div>
   </section>
-  <div class="info">نسخه آزمایشی رابط کاربری — اتصال واقعی در مرحله بعد راه‌اندازی می‌شود.</div>
+
+  <div class="info">
+    LIFE CHAT نسخه آزمایشی<br>
+    چت متنی آنلاین دونفره
+  </div>
 </main>
-<footer> L I F E &nbsp; C H A T </footer>
+
+<footer>L I F E &nbsp; C H A T</footer>
 
 <script>
 const statusBox = document.getElementById('status');
+const messagesBox = document.getElementById('messages');
+const messageInput = document.getElementById('messageInput');
+
+let connected = false;
+let myUid = '';
 
 function startChat() {
     statusBox.textContent = 'در حال ورود به LIFE CHAT...';
@@ -67,29 +81,101 @@ function startChat() {
         return;
     }
 
-    window.FirebaseBridge.signInAnonymously();
+    FirebaseBridge.signInAnonymously();
 }
 
 window.onFirebaseAuthResult = function(raw) {
     const result = JSON.parse(raw);
 
     if (result.ok) {
-        statusBox.textContent =
-            'ورود موفق! شناسه کاربر: ' + result.uid;
+        myUid = result.uid;
+        statusBox.textContent = 'ورود موفق؛ در حال جستجوی دوست...';
+        FirebaseBridge.startMatching();
     } else {
-        statusBox.textContent =
-            'خطا در ورود: ' + result.error;
+        statusBox.textContent = 'خطا در ورود: ' + result.error;
     }
 };
 
+window.onQueueStatus = function(raw) {
+    const data = JSON.parse(raw);
+    statusBox.textContent = data.message;
+};
+
+window.onMatchResult = function(raw) {
+    const data = JSON.parse(raw);
+    connected = true;
+    statusBox.textContent = 'به یک دوست وصل شدی! حالا پیام بده.';
+    messagesBox.innerHTML = '';
+    addSystemMessage('اتصال دونفره برقرار شد.');
+};
+
+window.onIncomingMessage = function(raw) {
+    const message = JSON.parse(raw);
+    addMessage(message.text, message.from === myUid);
+};
+
+window.onChatStopped = function() {
+    connected = false;
+    messagesBox.innerHTML = '';
+    addSystemMessage('اتصال متوقف شد.');
+};
+
+function addSystemMessage(text) {
+    const item = document.createElement('div');
+    item.className = 'system';
+    item.textContent = text;
+    messagesBox.appendChild(item);
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+}
+
+function addMessage(text, mine) {
+    const item = document.createElement('div');
+    item.className = mine ? 'msg mine' : 'msg';
+
+    const sender = document.createElement('div');
+    sender.className = 'sender';
+    sender.textContent = mine ? 'شما' : 'دوست شما';
+
+    const body = document.createElement('div');
+    body.textContent = text;
+
+    item.appendChild(sender);
+    item.appendChild(body);
+    messagesBox.appendChild(item);
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+}
+
+function sendMessage() {
+    const text = messageInput.value.trim();
+
+    if (!connected) {
+        statusBox.textContent = 'اول باید به یک نفر وصل شوی.';
+        return;
+    }
+
+    if (!text) return;
+
+    FirebaseBridge.sendMessage(text);
+    messageInput.value = '';
+}
+
 function nextChat() {
-    statusBox.textContent = 'سیستم پیدا کردن دوست هنوز در حال ساخت است.';
+    if (!window.FirebaseBridge) return;
+    connected = false;
+    messagesBox.innerHTML = '';
+    statusBox.textContent = 'در حال جستجوی نفر بعدی...';
+    FirebaseBridge.nextChat();
 }
 
 function stopChat() {
-    statusBox.textContent = 'جستجو متوقف شد.';
+    if (!window.FirebaseBridge) return;
+    connected = false;
+    FirebaseBridge.stopChat();
 }
-</script>
 
+messageInput.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') sendMessage();
+});
+</script>
 </body>
 </html>
