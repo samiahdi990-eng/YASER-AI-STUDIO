@@ -46,11 +46,6 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // تنظیم حالت صوتی مخصوص تماس
-        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-        audioManager.isMicrophoneMute = false
-        audioManager.isSpeakerphoneOn = true
 
         window.decorView.systemUiVisibility =
             View.SYSTEM_UI_FLAG_FULLSCREEN or
