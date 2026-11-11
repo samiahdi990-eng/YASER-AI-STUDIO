@@ -1173,14 +1173,33 @@ async function prepareVideo() {
         throw new Error('دسترسی دوربین در این WebView پشتیبانی نمی‌شود.');
     }
 
-    localStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: {
-            facingMode: 'user',
-            width: { ideal: 640 },
-            height: { ideal: 480 }
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            },
+            video: {
+                facingMode: 'user',
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            }
+        });
+    } catch (firstError) {
+        console.error('Camera and microphone error:', firstError);
+
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: false
+            });
+            videoMessage('میکروفون فعال شد؛ دوربین در دسترس نیست.');
+        } catch (audioError) {
+            console.error('Microphone error:', audioError);
+            throw new Error('میکروفون: ' + audioError.name + ' - ' + audioError.message);
         }
-    });
+    }
 
     localVideo.srcObject = localStream;
     await localVideo.play().catch(() => {});
