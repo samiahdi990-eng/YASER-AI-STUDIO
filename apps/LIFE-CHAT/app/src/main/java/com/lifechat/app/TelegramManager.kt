@@ -134,7 +134,7 @@ class TelegramManager(
     }
 
     fun close() {
-        client?.send(TdApi.Close())
+        client?.send(TdApi.Close()) { }
         client = null
     }
 
