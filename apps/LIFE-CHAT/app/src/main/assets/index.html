@@ -25,6 +25,17 @@ input{width:100%;padding:14px;margin:8px 0;border:1px solid #344b69;border-radiu
 .tabs{display:flex;gap:8px;padding:12px;background:#13243a;border-bottom:1px solid #263b57}
 .tabs button{background:#1c304a;flex:1;padding:10px 5px}
 .tabs button.active{background:#168de0}
+
+.searchbar{display:flex;align-items:center;gap:10px;padding:9px 14px;background:#13243a;border-bottom:1px solid #263b57}
+.searchbar span{font-size:25px;color:#8ca8c7}
+.searchbar input{margin:0;flex:1;min-width:0;border:0;border-radius:22px;background:#203650;padding:11px 16px;font-size:14px}
+.searchbar button{padding:7px 12px;background:transparent;font-size:23px;color:#a9c9e8}
+.tabs{gap:5px;padding:8px 9px;overflow-x:auto;scrollbar-width:none}
+.tabs button{flex:1;min-width:65px;white-space:nowrap;border-radius:9px;font-size:13px;padding:10px 7px;background:transparent;color:#a9c0dd}
+.tabs button.active{background:#168de0;color:white}
+.chat{min-height:76px;padding:11px 14px;transition:background .15s}
+.chat:active{background:#1b3049}
+.chatmeta time{font-size:11px;color:#8fa9c5;white-space:nowrap}
 #chatList{flex:1;overflow-y:auto}
 .chat{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid #20334c;min-height:82px;cursor:pointer}
 .avatar{width:54px;height:54px;flex-shrink:0;border-radius:50%;background:#168de0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:bold;overflow:hidden}
@@ -96,10 +107,17 @@ input{width:100%;padding:14px;margin:8px 0;border:1px solid #344b69;border-radiu
   <button class="headbtn" onclick="refreshChats()">⟳</button>
  </header>
 
- <nav class="tabs">
-  <button class="active">همه چت‌ها</button>
-  <button onclick="refreshChats()">به‌روزرسانی</button>
- </nav>
+ <div class="searchbar">
+  <span>⌕</span>
+  <input id="chatSearch" placeholder="جستجو در گفتگوها..." oninput="renderChats()">
+  <button onclick="refreshChats()" title="به‌روزرسانی">⟳</button>
+</div>
+<nav class="tabs" id="chatTabs">
+  <button class="active" onclick="setChatFilter('all',this)">همه</button>
+  <button onclick="setChatFilter('private',this)">شخصی</button>
+  <button onclick="setChatFilter('group',this)">گروه‌ها</button>
+  <button onclick="setChatFilter('channel',this)">کانال‌ها</button>
+</nav>
 
  <div id="chatList">
   <div id="empty">در حال دریافت گفتگوها...</div>
@@ -159,6 +177,7 @@ input{width:100%;padding:14px;margin:8px 0;border:1px solid #344b69;border-radiu
 let chats=new Map();
 let currentChatId=null;
 let currentChatTitle='';
+let currentChatFilter='all';
 let voiceFiles=new Map();
 
 function parseData(data){
@@ -285,6 +304,7 @@ function showSettings(){
  document.getElementById('chatList').style.display='none';
  document.getElementById('conversation').style.display='none';
  document.querySelector('.tabs').style.display='none';
+ document.querySelector('.searchbar').style.display='none';
  document.getElementById('bottom').style.display='none';
  document.getElementById('settingsScreen').style.display='block';
  document.getElementById('settingsNotice').textContent='';
@@ -294,6 +314,7 @@ function closeSettings(){
  document.getElementById('settingsScreen').style.display='none';
  document.getElementById('chatList').style.display='block';
  document.querySelector('.tabs').style.display='flex';
+ document.querySelector('.searchbar').style.display='flex';
  document.getElementById('bottom').style.display='flex';
 }
 function saveTelegramProfile(){
@@ -309,20 +330,40 @@ function refreshChats(){
  TelegramBridge.loadChats();
 }
 
+function setChatFilter(filter,button){
+ currentChatFilter=filter;
+ document.querySelectorAll('#chatTabs button').forEach(b=>b.classList.remove('active'));
+ if(button)button.classList.add('active');
+ renderChats();
+}
 function renderChats(){
  const list=document.getElementById('chatList');
  list.innerHTML='';
- if(chats.size===0){
-  list.innerHTML='<div id="empty">هنوز گفتگویی دریافت نشده است.</div>';
+ const query=(document.getElementById('chatSearch')?.value||'').trim().toLocaleLowerCase();
+ const items=Array.from(chats.values()).filter(chat=>{
+  const kind=chat.kind||'other';
+  const matchesType=currentChatFilter==='all'||kind===currentChatFilter;
+  const text=((chat.title||'')+' '+(chat.lastMessage||'')).toLocaleLowerCase();
+  return matchesType&&text.includes(query);
+ });
+ if(!items.length){
+  list.innerHTML='<div id="empty">'+(query?'نتیجه‌ای پیدا نشد.':'در این بخش گفتگویی وجود ندارد.')+'</div>';
   return;
  }
- Array.from(chats.values()).forEach(chat=>{
+ items.sort((a,b)=>Number(b.lastMessageDate||0)-Number(a.lastMessageDate||0));
+ items.forEach(chat=>{
   const row=document.createElement('div');
   row.className='chat';
   const avatar=document.createElement('div');
   avatar.className='avatar';
-  avatar.textContent=(chat.title||'?').trim().charAt(0)||'✈';
-
+  if(chat.photoUrl){
+   const img=document.createElement('img');
+   img.src=chat.photoUrl;
+   img.alt='';
+   avatar.appendChild(img);
+  }else{
+   avatar.textContent=(chat.title||'?').trim().charAt(0)||'✈';
+  }
   const info=document.createElement('div');
   info.className='chatinfo';
   const name=document.createElement('div');
@@ -332,13 +373,17 @@ function renderChats(){
   preview.className='preview';
   preview.textContent=chat.lastMessage||'برای دیدن پیام‌ها باز کنید';
   info.append(name,preview);
-
   const meta=document.createElement('div');
   meta.className='chatmeta';
+  if(Number(chat.lastMessageDate)>0){
+   const time=document.createElement('time');
+   time.textContent=new Date(Number(chat.lastMessageDate)*1000).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
+   meta.appendChild(time);
+  }
   if(Number(chat.unreadCount)>0){
    const badge=document.createElement('span');
    badge.className='unread';
-   badge.textContent=chat.unreadCount;
+   badge.textContent=Number(chat.unreadCount)>999?'999+':chat.unreadCount;
    meta.appendChild(badge);
   }
   row.append(avatar,info,meta);
@@ -346,7 +391,6 @@ function renderChats(){
   list.appendChild(row);
  });
 }
-
 function openChat(id,title){
  currentChatId=Number(id);
  currentChatTitle=title||'گفتگو';
@@ -355,6 +399,7 @@ function openChat(id,title){
  document.getElementById('chatList').style.display='none';
  document.getElementById('bottom').style.display='none';
  document.querySelector('.tabs').style.display='none';
+ document.querySelector('.searchbar').style.display='none';
  document.getElementById('conversation').style.display='flex';
  document.getElementById('messages').innerHTML='<div id="messageEmpty" style="text-align:center;color:#91a8c2">در حال دریافت پیام‌ها...</div>';
  reloadMessages();
@@ -371,6 +416,7 @@ function backToChats(){
  document.getElementById('chatList').style.display='block';
  document.getElementById('bottom').style.display='flex';
  document.querySelector('.tabs').style.display='flex';
+ document.querySelector('.searchbar').style.display='flex';
 }
 
 function renderMessages(items){

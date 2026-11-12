@@ -141,6 +141,14 @@ class TelegramManager(
                 item.put("title", result.title ?: "گفتگو")
                 item.put("unreadCount", result.unreadCount)
                 item.put("lastMessage", messageText(result.lastMessage))
+                item.put("lastMessageDate", result.lastMessage?.date ?: 0)
+                val chatKind = when (val chatType = result.type) {
+                    is TdApi.ChatTypePrivate, is TdApi.ChatTypeSecret -> "private"
+                    is TdApi.ChatTypeBasicGroup -> "group"
+                    is TdApi.ChatTypeSupergroup -> if (chatType.isChannel) "channel" else "group"
+                    else -> "other"
+                }
+                item.put("kind", chatKind)
 
                 result.photo?.small?.let { photo ->
                     item.put("photoFileId", photo.id)
