@@ -163,6 +163,31 @@ class TelegramManager(
         }
     }
 
+    fun openSupportChat() {
+        client?.send(TdApi.SearchPublicChat("KHAN_Sohail_580")) { result ->
+            if (result is TdApi.Error) {
+                emit("support_chat_error", "پیدا کردن پشتیبان ناموفق بود: ${result.message}")
+            } else if (result is TdApi.Chat) {
+                val privateType = result.type as? TdApi.ChatTypePrivate
+                if (privateType == null) {
+                    emit("support_chat_error", "این نام کاربری حساب شخصی تلگرام نیست.")
+                } else {
+                    client?.send(TdApi.CreatePrivateChat(privateType.userId, false)) { chatResult ->
+                        if (chatResult is TdApi.Chat) {
+                            val data = JSONObject()
+                            data.put("type", "support_chat_ready")
+                            data.put("chatId", chatResult.id)
+                            callback(data)
+                            getChat(chatResult.id)
+                        } else if (chatResult is TdApi.Error) {
+                            emit("support_chat_error", chatResult.message)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fun openChat(chatId: Long) {
         client?.send(TdApi.GetChatHistory(chatId, 0, 0, 50, false)) { result ->
             if (result is TdApi.Error) {

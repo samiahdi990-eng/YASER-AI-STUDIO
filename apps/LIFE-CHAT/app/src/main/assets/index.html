@@ -70,6 +70,236 @@ input{width:100%;padding:14px;margin:8px 0;border:1px solid #344b69;border-radiu
 .settings-session button{background:#a83242;padding:8px 12px;font-size:13px}
 .settings-current{color:#67d6a0;font-size:12px}
 #settingsNotice{color:#75caff;font-size:13px;margin:8px 0}
+
+/* LIFE CHAT PREMIUM DESIGN V1 */
+:root{
+ --bg:#080f20;
+ --panel:#101d33;
+ --panel2:#162641;
+ --blue:#299cff;
+ --cyan:#42d8ef;
+ --purple:#8867ff;
+ --muted:#91a8c8;
+ --line:rgba(160,190,230,.12);
+ --white:#f4f8ff;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{
+ background:
+ radial-gradient(ellipse at 10% 0%,rgba(41,156,255,.16),transparent 38%),
+ radial-gradient(ellipse at 95% 45%,rgba(136,103,255,.12),transparent 35%),
+ linear-gradient(145deg,#080f20,#0b1629 55%,#10182d);
+ color:var(--white);
+ font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+ letter-spacing:.1px;
+}
+button{
+ border:1px solid rgba(255,255,255,.08);
+ border-radius:14px;
+ background:linear-gradient(135deg,#238de9,#536cff);
+ color:white;
+ font-weight:700;
+ cursor:pointer;
+ transition:transform .18s,filter .18s,box-shadow .18s;
+}
+button:active{transform:scale(.96);filter:brightness(1.15)}
+.header{
+ position:sticky;top:0;z-index:10;
+ height:76px;
+ padding:10px 17px;
+ background:rgba(12,25,45,.88);
+ backdrop-filter:blur(22px);
+ border-bottom:1px solid var(--line);
+ box-shadow:0 8px 30px rgba(0,0,0,.15);
+}
+.brand{
+ font-size:22px;
+ font-weight:900;
+ letter-spacing:1px;
+ background:linear-gradient(100deg,#fff,#73caff,#a995ff);
+ -webkit-background-clip:text;
+ background-clip:text;
+ color:transparent;
+}
+.brand small{
+ color:#8da8ca;
+ font-size:11px;
+ letter-spacing:1.5px;
+ font-weight:600;
+}
+.headbtn{
+ width:43px;height:43px;
+ border-radius:15px;
+ background:linear-gradient(145deg,#1c3d65,#172a48);
+ color:#80d2ff;
+ font-size:24px;
+ box-shadow:0 5px 18px rgba(0,130,255,.15);
+}
+.searchbar{
+ margin:12px 13px 7px;
+ padding:8px 11px;
+ border:1px solid rgba(120,180,255,.17);
+ border-radius:18px;
+ background:rgba(22,39,65,.82);
+ box-shadow:0 8px 25px rgba(0,0,0,.14);
+}
+.searchbar span{color:#70caff}
+.searchbar input{
+ background:transparent;
+ color:white;
+ outline:none;
+}
+.searchbar input::placeholder{color:#8298b7}
+.searchbar button{
+ border:0;
+ background:linear-gradient(135deg,#218ee9,#765cff);
+ border-radius:12px;
+ width:38px;height:38px;
+ box-shadow:0 4px 15px rgba(44,143,255,.25);
+}
+.tabs{
+ margin:5px 12px 12px;
+ padding:5px;
+ gap:5px;
+ border:1px solid var(--line);
+ border-radius:17px;
+ background:rgba(17,31,53,.85);
+}
+.tabs button{
+ border:0;
+ background:transparent;
+ color:#9db2d0;
+ border-radius:12px;
+ padding:10px 6px;
+ font-size:12px;
+}
+.tabs button.active{
+ color:white;
+ background:linear-gradient(115deg,#168eea,#655cff);
+ box-shadow:0 5px 16px rgba(44,137,255,.24);
+}
+#chatList{
+ padding:0 9px 18px;
+}
+.chat{
+ position:relative;
+ margin:6px 0;
+ padding:12px 11px;
+ min-height:78px;
+ border:1px solid rgba(150,190,240,.075);
+ border-radius:19px;
+ background:linear-gradient(110deg,rgba(23,42,69,.92),rgba(16,30,52,.82));
+ box-shadow:0 5px 18px rgba(0,0,0,.11);
+ transition:background .2s,transform .2s,border-color .2s;
+}
+.chat:active{
+ background:linear-gradient(110deg,#1c4268,#202b52);
+ border-color:rgba(76,174,255,.4);
+ transform:scale(.985);
+}
+.avatar{
+ width:54px;height:54px;
+ border:2px solid rgba(120,205,255,.42);
+ background:linear-gradient(145deg,#168de0,#775cff);
+ color:white;
+ box-shadow:0 5px 16px rgba(36,133,255,.22);
+}
+.avatar img{border-radius:50%}
+.chatinfo{padding:2px 0}
+.chatname{
+ color:#f3f7ff;
+ font-size:15px;
+ font-weight:800;
+ margin-bottom:7px;
+}
+.preview{
+ color:#91a8c8;
+ font-size:12px;
+}
+.chatmeta{gap:8px}
+.chatmeta time{color:#81a1c8;font-size:10px}
+.unread{
+ min-width:22px;
+ padding:4px 7px;
+ border-radius:20px;
+ background:linear-gradient(135deg,#19a8f5,#5966ff);
+ color:white;
+ font-weight:800;
+ box-shadow:0 3px 10px rgba(36,145,255,.25);
+}
+#empty{
+ margin:35px 12px;
+ padding:28px 15px;
+ border:1px dashed rgba(125,180,240,.2);
+ border-radius:20px;
+ background:rgba(19,37,62,.5);
+ color:#9cb5d5;
+}
+#conversation{
+ background:linear-gradient(160deg,#0b172b,#0d1b30);
+}
+.chathead{
+ background:rgba(15,31,53,.95);
+ border-bottom:1px solid var(--line);
+ box-shadow:0 5px 20px rgba(0,0,0,.15);
+}
+#messages{
+ background:
+ radial-gradient(ellipse at 50% 0%,rgba(39,128,206,.08),transparent 55%),
+ transparent;
+}
+#bottom{
+ position:sticky;
+ bottom:0;
+ z-index:9;
+ padding:9px 8px calc(9px + env(safe-area-inset-bottom));
+ background:rgba(12,25,44,.94);
+ backdrop-filter:blur(20px);
+ border-top:1px solid rgba(130,180,240,.14);
+ box-shadow:0 -8px 25px rgba(0,0,0,.18);
+}
+#bottom>*{
+ transition:color .2s,background .2s;
+}
+#settingsScreen{
+ background:linear-gradient(160deg,#0b172b,#111e36);
+}
+#settingsScreen input,
+#settingsScreen textarea,
+#conversation input{
+ border:1px solid rgba(120,175,235,.2);
+ border-radius:14px;
+ background:#142640;
+ color:white;
+ padding:12px 14px;
+ outline:none;
+}
+#settingsScreen input:focus,
+#settingsScreen textarea:focus,
+#conversation input:focus{
+ border-color:#329fff;
+ box-shadow:0 0 0 3px rgba(50,159,255,.12);
+}
+#settingsScreen button,
+#conversation button{
+ border-radius:13px;
+ box-shadow:0 5px 15px rgba(25,120,230,.16);
+}
+#conversation button{padding:10px 15px}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{
+ background:linear-gradient(#279cff,#8065ff);
+ border-radius:10px;
+}
+::selection{background:#287edc;color:white}
+@media(min-width:600px){
+ body{max-width:600px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+}
+@media(prefers-reduced-motion:reduce){
+ *{transition:none!important;animation:none!important}
+}
+
 </style>
 </head>
 <body>
@@ -256,6 +486,17 @@ function onTelegramData(raw){
   if(data.type==='settings_error')alert(data.message||'خطا در تنظیمات');
  }
 
+ if(data.type==='support_chat_ready'){
+  currentChatId=Number(data.chatId);
+  currentChatTitle='پشتیبان LIFE CHAT';
+  document.getElementById('chatTitle').textContent=currentChatTitle;
+  reloadMessages();
+ }
+ if(data.type==='support_chat_error'){
+  const msg=data.message||'اتصال به پشتیبان ناموفق بود';
+  document.getElementById('messages').textContent=msg;
+  alert(msg);
+ }
  if(data.type==='chat_item'&&data.item){
   const old=chats.get(String(data.item.id));
   if(old&&old.photoUrl)data.item.photoUrl=old.photoUrl;
@@ -336,6 +577,46 @@ function setChatFilter(filter,button){
  if(button)button.classList.add('active');
  renderChats();
 }
+function appendSupportRow(list){
+ const row=document.createElement('div');
+ row.className='chat';
+ const avatar=document.createElement('div');
+ avatar.className='avatar';
+ avatar.textContent='✦';
+ const info=document.createElement('div');
+ info.className='chatinfo';
+ const name=document.createElement('div');
+ name.className='chatname';
+ name.textContent='پشتیبان LIFE CHAT';
+ const preview=document.createElement('div');
+ preview.className='preview';
+ preview.textContent='گفتگوی مستقیم با پشتیبان';
+ info.append(name,preview);
+ const meta=document.createElement('div');
+ meta.className='chatmeta';
+ row.append(avatar,info,meta);
+ row.onclick=openSupportConversation;
+ list.appendChild(row);
+}
+
+function openSupportConversation(){
+ currentChatId=null;
+ currentChatTitle='پشتیبان LIFE CHAT';
+ document.getElementById('chatTitle').textContent=currentChatTitle;
+ document.getElementById('chatAvatar').textContent='✦';
+ document.getElementById('chatList').style.display='none';
+ document.getElementById('bottom').style.display='none';
+ document.querySelector('.tabs').style.display='none';
+ document.querySelector('.searchbar').style.display='none';
+ document.getElementById('conversation').style.display='flex';
+ document.getElementById('messages').innerHTML='<div id="messageEmpty" style="text-align:center;color:#91a8c2">در حال اتصال به پشتیبان...</div>';
+ if(window.TelegramBridge && TelegramBridge.openSupportChat){
+  TelegramBridge.openSupportChat();
+ }else{
+  document.getElementById('messages').textContent='اتصال تلگرام در دسترس نیست.';
+ }
+}
+
 function renderChats(){
  const list=document.getElementById('chatList');
  list.innerHTML='';
@@ -346,11 +627,14 @@ function renderChats(){
   const text=((chat.title||'')+' '+(chat.lastMessage||'')).toLocaleLowerCase();
   return matchesType&&text.includes(query);
  });
- if(!items.length){
+ const supportQuery='پشتیبان life chat khan_sohail_580';
+ const supportMatches=(currentChatFilter==='all'||currentChatFilter==='private') && supportQuery.includes(query);
+ if(!items.length && !supportMatches){
   list.innerHTML='<div id="empty">'+(query?'نتیجه‌ای پیدا نشد.':'در این بخش گفتگویی وجود ندارد.')+'</div>';
   return;
  }
  items.sort((a,b)=>Number(b.lastMessageDate||0)-Number(a.lastMessageDate||0));
+ if(supportMatches)appendSupportRow(list);
  items.forEach(chat=>{
   const row=document.createElement('div');
   row.className='chat';

@@ -183,7 +183,8 @@ class MainActivity : Activity() {
                             type == "chat_photo" || type == "voice_file" ||
                             type == "settings_data" || type == "bio_data" ||
                             type == "premium_data" || type == "sessions_data" ||
-                            type == "settings_saved" || type == "settings_error") {
+                            type == "settings_saved" || type == "settings_error" ||
+                            type == "support_chat_ready" || type == "support_chat_error") {
                             sendJs("onTelegramData", data)
                         } else {
                             sendJs("onTelegramState", data)
@@ -217,6 +218,11 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun openChat(chatId: Long) {
             telegramManager?.openChat(chatId)
+        }
+
+        @JavascriptInterface
+        fun openSupportChat() {
+            telegramManager?.openSupportChat()
         }
 
         @JavascriptInterface
