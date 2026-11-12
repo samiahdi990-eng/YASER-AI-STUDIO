@@ -976,7 +976,26 @@ footer{color:#7298b1!important}
 
 </div>
 
-<script>
+
+<section id="telegramPanel" dir="rtl" style="margin:20px auto;padding:20px;max-width:480px;background:#17212b;color:white;border-radius:18px;text-align:center;font-family:Arial">
+  <h2>✈️ تلگرام</h2>
+  <p>ورود به حساب تلگرام</p>
+  <div id="telegramStatus" style="padding:12px;color:#8ecdf5">برای اتصال، دکمه زیر را بزن.</div>
+  <button onclick="telegramStart()" style="padding:12px 22px;border:0;border-radius:10px;background:#229ed9;color:white;font-size:16px">اتصال به تلگرام</button>
+  <div id="telegramPhoneBox" style="display:none;margin-top:15px">
+    <input id="telegramPhone" dir="ltr" placeholder="+937xxxxxxxx" style="box-sizing:border-box;width:100%;padding:13px;margin:7px 0;border-radius:9px;border:0">
+    <button onclick="telegramSendPhone()" style="padding:11px 20px;border:0;border-radius:9px;background:#229ed9;color:white">ارسال شماره</button>
+  </div>
+  <div id="telegramCodeBox" style="display:none;margin-top:15px">
+    <input id="telegramCode" dir="ltr" placeholder="کد تأیید" style="box-sizing:border-box;width:100%;padding:13px;margin:7px 0;border-radius:9px;border:0">
+    <button onclick="telegramSendCode()" style="padding:11px 20px;border:0;border-radius:9px;background:#229ed9;color:white">تأیید کد</button>
+  </div>
+  <div id="telegramPasswordBox" style="display:none;margin-top:15px">
+    <input id="telegramPassword" type="password" placeholder="رمز دومرحله‌ای" style="box-sizing:border-box;width:100%;padding:13px;margin:7px 0;border-radius:9px;border:0">
+    <button onclick="telegramSendPassword()" style="padding:11px 20px;border:0;border-radius:9px;background:#229ed9;color:white">ورود</button>
+  </div>
+</section>
+\n<script>
 const statusBox = document.getElementById('status');
 const messagesBox = document.getElementById('messages');
 const messageInput = document.getElementById('messageInput');
@@ -1413,6 +1432,36 @@ function hangupVideo() {
 messageInput.addEventListener('keydown', function(event) {
     if (event.key === 'Enter') sendMessage();
 });
-</script>
+
+function telegramStart() {
+  if (!window.TelegramBridge) {
+    document.getElementById('telegramStatus').textContent = 'این بخش فقط در نسخه اندروید برنامه فعال است.';
+    return;
+  }
+  document.getElementById('telegramStatus').textContent = 'در حال اتصال به تلگرام...';
+  TelegramBridge.start();
+}
+function onTelegramState(data) {
+  try { data = typeof data === 'string' ? JSON.parse(data) : data; } catch(e) {}
+  document.getElementById('telegramStatus').textContent = data.message || data.type;
+  if (data.type === 'wait_phone') document.getElementById('telegramPhoneBox').style.display = 'block';
+  if (data.type === 'wait_code') document.getElementById('telegramCodeBox').style.display = 'block';
+  if (data.type === 'wait_password') document.getElementById('telegramPasswordBox').style.display = 'block';
+  if (data.type === 'ready') {
+    document.getElementById('telegramPhoneBox').style.display = 'none';
+    document.getElementById('telegramCodeBox').style.display = 'none';
+    document.getElementById('telegramPasswordBox').style.display = 'none';
+  }
+}
+function telegramSendPhone() {
+  TelegramBridge.sendPhone(document.getElementById('telegramPhone').value.trim());
+}
+function telegramSendCode() {
+  TelegramBridge.sendCode(document.getElementById('telegramCode').value.trim());
+}
+function telegramSendPassword() {
+  TelegramBridge.sendPassword(document.getElementById('telegramPassword').value);
+}
+\n</script>
 </body>
 </html>

@@ -30,7 +30,10 @@ jobs:
 
       - name: Build APK
         working-directory: apps/LIFE-CHAT
-        run: gradle assembleDebug
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        run: gradle assembleDebug -PTELEGRAM_API_ID="$TELEGRAM_API_ID" -PTELEGRAM_API_HASH="$TELEGRAM_API_HASH"
 
       - name: Verify APK
         run: test -s apps/LIFE-CHAT/app/build/outputs/apk/debug/app-debug.apk

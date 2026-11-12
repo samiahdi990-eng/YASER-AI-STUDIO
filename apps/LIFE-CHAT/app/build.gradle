@@ -8,7 +8,13 @@ android {
     namespace 'com.lifechat.app'
     compileSdk 35
 
+    buildFeatures {
+        buildConfig true
+    }
+
     defaultConfig {
+        buildConfigField 'int', 'TELEGRAM_API_ID', providers.gradleProperty('TELEGRAM_API_ID').getOrElse('0')
+        buildConfigField 'String', 'TELEGRAM_API_HASH', "\"${providers.gradleProperty('TELEGRAM_API_HASH').getOrElse('')}\""
         applicationId 'com.lifechat.app'
         minSdk 23
         targetSdk 35

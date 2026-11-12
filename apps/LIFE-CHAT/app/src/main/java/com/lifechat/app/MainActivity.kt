@@ -21,6 +21,7 @@ import org.json.JSONObject
 import org.json.JSONArray
 
 class MainActivity : Activity() {
+    private var telegramManager: TelegramManager? = null
     private lateinit var webView: WebView
     private var pendingWebPermissionRequest: PermissionRequest? = null
     private val mediaPermissionRequestCode = 4101
@@ -113,6 +114,7 @@ class MainActivity : Activity() {
             }
         }
         webView.addJavascriptInterface(FirebaseBridge(), "FirebaseBridge")
+        webView.addJavascriptInterface(TelegramBridge(), "TelegramBridge")
 
         setContentView(webView)
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")
@@ -159,11 +161,43 @@ class MainActivity : Activity() {
             e.printStackTrace()
         }
 
+        telegramManager?.close()
+        telegramManager = null
+
         if (::webView.isInitialized) {
             webView.destroy()
         }
 
         super.onDestroy()
+    }
+
+    inner class TelegramBridge {
+        @JavascriptInterface
+        fun start() {
+            runOnUiThread {
+                if (telegramManager == null) {
+                    telegramManager = TelegramManager(this@MainActivity) { data ->
+                        sendJs("onTelegramState", data)
+                    }
+                }
+                telegramManager?.start()
+            }
+        }
+
+        @JavascriptInterface
+        fun sendPhone(phone: String) {
+            telegramManager?.sendPhone(phone)
+        }
+
+        @JavascriptInterface
+        fun sendCode(code: String) {
+            telegramManager?.sendCode(code)
+        }
+
+        @JavascriptInterface
+        fun sendPassword(password: String) {
+            telegramManager?.sendPassword(password)
+        }
     }
 
     inner class FirebaseBridge {
