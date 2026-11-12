@@ -2,96 +2,321 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LIFE CHAT - Telegram</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LIFE CHAT</title>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;min-height:100vh;display:flex;align-items:center;
- justify-content:center;background:#101827;color:white;
- font-family:Arial,sans-serif;padding:20px
-}
-.panel{
- width:100%;max-width:390px;background:#1c293b;
- border-radius:22px;padding:28px 22px;text-align:center;
- box-shadow:0 12px 35px #0005
-}
-.logo{font-size:48px;margin-bottom:8px}
-h2{margin:8px 0 12px}
-p{color:#aebed1;font-size:14px}
-input{
- width:100%;padding:15px;margin:9px 0;
- border:1px solid #40516a;border-radius:12px;
- background:#101827;color:white;font-size:16px;text-align:center
-}
-button{
- width:100%;padding:15px;margin-top:12px;
- border:0;border-radius:12px;background:#229ed9;
- color:white;font-size:16px;font-weight:bold
-}
-button:active{opacity:.8}
+body{margin:0;background:#0b1728;color:white;font-family:Arial,sans-serif;height:100vh;overflow:hidden}
+button,input{font-family:inherit}
+button{border:0;cursor:pointer;color:white;background:#168de0;border-radius:12px;padding:13px;font-size:15px}
+#login{height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.panel{width:100%;max-width:400px;background:#17283e;border-radius:22px;padding:25px;text-align:center}
+input{width:100%;padding:14px;margin:8px 0;border:1px solid #344b69;border-radius:12px;background:#0d1a2c;color:white;font-size:16px}
+.panel button{width:100%;margin-top:8px}
 .step{display:none}
-#status{margin-top:20px;color:#8ed8ff;line-height:1.8}
+#status{font-size:14px;color:#75caff;margin-top:16px}
+.tglogo{width:55px;height:55px;border-radius:50%;background:#168de0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tglogo svg{width:65%;height:65%;fill:white}
+#app{display:none;height:100vh;flex-direction:column}
+.header{height:76px;background:#13243a;display:flex;align-items:center;padding:10px 15px;gap:12px;border-bottom:1px solid #263b57}
+.brand{font-size:21px;font-weight:bold;flex:1}
+.brand small{display:block;color:#91abc9;font-size:12px;margin-top:5px;font-weight:normal}
+.headbtn{background:transparent;font-size:24px;padding:8px}
+.tabs{display:flex;gap:8px;padding:12px;background:#13243a;border-bottom:1px solid #263b57}
+.tabs button{background:#1c304a;flex:1;padding:10px 5px}
+.tabs button.active{background:#168de0}
+#chatList{flex:1;overflow-y:auto}
+.chat{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid #20334c;min-height:82px;cursor:pointer}
+.avatar{width:54px;height:54px;flex-shrink:0;border-radius:50%;background:#168de0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:bold;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.chatinfo{flex:1;min-width:0}
+.chatname{font-size:16px;font-weight:bold;margin-bottom:8px}
+.preview{color:#9db1ca;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chatmeta{display:flex;flex-direction:column;align-items:center;gap:9px;color:#9db1ca;font-size:12px}
+.unread{background:#168de0;color:white;border-radius:20px;min-width:22px;text-align:center;padding:4px 6px}
+#empty{text-align:center;color:#8da4c0;padding:35px 15px}
+#conversation{display:none;flex:1;flex-direction:column;min-height:0}
+.chathead{display:flex;align-items:center;gap:10px;padding:10px;background:#14263d}
+.chathead button{background:transparent;font-size:23px;padding:7px}
+#chatTitle{font-weight:bold;flex:1}
+#messages{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:9px}
+.bubble{max-width:82%;padding:11px 13px;border-radius:15px;background:#1d3049;align-self:flex-start;overflow-wrap:anywhere;line-height:1.6}
+.bubble.out{background:#075c83;align-self:flex-end}
+.msgtime{font-size:10px;color:#b7c8da;text-align:left;margin-top:4px}
+.composer{display:flex;gap:8px;padding:10px;background:#14263d;align-items:center}
+.composer input{margin:0;flex:1;min-width:0}
+.composer button{padding:13px 17px}
+#bottom{display:flex;justify-content:space-around;padding:13px;background:#13243a;border-top:1px solid #263b57;color:#a9c0dd}
+#bottom span{font-size:13px}
 </style>
 </head>
 <body>
-<div class="panel">
- <div class="logo">✈️</div>
- <h2>LIFE CHAT</h2>
- <p>ورود و اتصال به تلگرام</p>
 
- <button id="connect" onclick="telegramStart()">اتصال به تلگرام</button>
+<section id="login">
+ <div class="panel">
+  <div class="tglogo" style="margin:auto;width:75px;height:75px">
+   <svg viewBox="0 0 24 24"><path d="M21.8 4.2 18.5 20c-.25 1.1-.9 1.35-1.8.85l-5-3.7-2.4 2.3c-.3.3-.55.55-1.1.55l.35-5.1 9.3-8.4c.4-.35-.1-.55-.6-.2L5.75 13.5.8 11.95c-1.1-.35-1.1-1.1.25-1.6L20.4 2.8c.9-.35 1.7.2 1.4 1.4z"/></svg>
+  </div>
+  <h2>LIFE CHAT</h2>
+  <p>ورود و اتصال به تلگرام</p>
+  <button id="connect" onclick="telegramStart()">اتصال به تلگرام</button>
+  <div id="phoneBox" class="step">
+   <input id="phone" type="tel" placeholder="شماره تلفن با کد کشور">
+   <button onclick="telegramSendPhone()">ادامه</button>
+  </div>
+  <div id="codeBox" class="step">
+   <input id="code" placeholder="کد تأیید تلگرام">
+   <button onclick="telegramSendCode()">تأیید کد</button>
+  </div>
+  <div id="passwordBox" class="step">
+   <input id="password" type="password" placeholder="رمز دومرحله‌ای">
+   <button onclick="telegramSendPassword()">ورود</button>
+  </div>
+  <div id="status">برای شروع، اتصال به تلگرام را بزنید.</div>
+ </div>
+</section>
 
- <div id="phoneBox" class="step">
-  <input id="phone" type="tel" placeholder="شماره تلفن با کد کشور">
-  <button onclick="telegramSendPhone()">ادامه</button>
+<section id="app">
+ <header class="header">
+  <div class="tglogo">
+   <svg viewBox="0 0 24 24"><path d="M21.8 4.2 18.5 20c-.25 1.1-.9 1.35-1.8.85l-5-3.7-2.4 2.3c-.3.3-.55.55-1.1.55l.35-5.1 9.3-8.4c.4-.35-.1-.55-.6-.2L5.75 13.5.8 11.95c-1.1-.35-1.1-1.1.25-1.6L20.4 2.8c.9-.35 1.7.2 1.4 1.4z"/></svg>
+  </div>
+  <div class="brand">LIFE CHAT<small>پیام‌رسان تلگرام</small></div>
+  <button class="headbtn" onclick="refreshChats()">⟳</button>
+ </header>
+
+ <nav class="tabs">
+  <button class="active">همه چت‌ها</button>
+  <button onclick="refreshChats()">به‌روزرسانی</button>
+ </nav>
+
+ <div id="chatList">
+  <div id="empty">در حال دریافت گفتگوها...</div>
  </div>
 
- <div id="codeBox" class="step">
-  <input id="code" type="text" placeholder="کد تأیید تلگرام">
-  <button onclick="telegramSendCode()">تأیید کد</button>
- </div>
+ <section id="conversation">
+  <div class="chathead">
+   <button onclick="backToChats()">➜</button>
+   <div class="avatar" id="chatAvatar">✈</div>
+   <div id="chatTitle">گفتگو</div>
+   <button onclick="reloadMessages()">⟳</button>
+  </div>
+  <div id="messages">
+   <div id="messageEmpty" style="text-align:center;color:#91a8c2">در حال دریافت پیام‌ها...</div>
+  </div>
+  <div class="composer">
+   <input id="messageInput" placeholder="پیام خود را بنویسید..." onkeydown="if(event.key==='Enter')sendCurrentMessage()">
+   <button onclick="sendCurrentMessage()">ارسال</button>
+  </div>
+ </section>
 
- <div id="passwordBox" class="step">
-  <input id="password" type="password" placeholder="رمز دومرحله‌ای">
-  <button onclick="telegramSendPassword()">ورود</button>
- </div>
-
- <div id="status">برای شروع، اتصال به تلگرام را بزنید.</div>
-</div>
+ <footer id="bottom">
+  <span>💬 چت‌ها</span>
+  <span>👥 مخاطبین</span>
+  <span>📞 تماس‌ها</span>
+  <span>⚙ تنظیمات</span>
+ </footer>
+</section>
 
 <script>
+let chats=new Map();
+let currentChatId=null;
+let currentChatTitle='';
+let voiceFiles=new Map();
+
+function parseData(data){
+ if(typeof data==='string'){try{return JSON.parse(data)}catch(e){return {}}}
+ return data||{};
+}
+
 function telegramStart(){
  document.getElementById('status').textContent='در حال اتصال...';
- if(window.TelegramBridge) TelegramBridge.start();
- else document.getElementById('status').textContent='پل ارتباطی تلگرام در دسترس نیست.';
+ if(window.TelegramBridge)TelegramBridge.start();
+ else document.getElementById('status').textContent='پل تلگرام در دسترس نیست.';
 }
 function telegramSendPhone(){
  const v=document.getElementById('phone').value.trim();
- if(v && window.TelegramBridge) TelegramBridge.sendPhone(v);
+ if(v&&window.TelegramBridge)TelegramBridge.sendPhone(v);
 }
 function telegramSendCode(){
  const v=document.getElementById('code').value.trim();
- if(v && window.TelegramBridge) TelegramBridge.sendCode(v);
+ if(v&&window.TelegramBridge)TelegramBridge.sendCode(v);
 }
 function telegramSendPassword(){
  const v=document.getElementById('password').value;
- if(v && window.TelegramBridge) TelegramBridge.sendPassword(v);
+ if(v&&window.TelegramBridge)TelegramBridge.sendPassword(v);
 }
-function onTelegramState(data){
- if(typeof data==='string'){try{data=JSON.parse(data)}catch(e){return}}
- const status=document.getElementById('status');
- status.textContent=data.message || data.type || 'وضعیت تلگرام تغییر کرد';
- if(data.type==='wait_phone') document.getElementById('phoneBox').style.display='block';
- if(data.type==='wait_code') document.getElementById('codeBox').style.display='block';
- if(data.type==='wait_password') document.getElementById('passwordBox').style.display='block';
+
+function onTelegramState(raw){
+ const data=parseData(raw);
+ document.getElementById('status').textContent=data.message||data.type||'';
+ if(data.type==='wait_phone')document.getElementById('phoneBox').style.display='block';
+ if(data.type==='wait_code')document.getElementById('codeBox').style.display='block';
+ if(data.type==='wait_password')document.getElementById('passwordBox').style.display='block';
  if(data.type==='ready'){
-  document.getElementById('phoneBox').style.display='none';
-  document.getElementById('codeBox').style.display='none';
-  document.getElementById('passwordBox').style.display='none';
-  document.getElementById('connect').style.display='none';
-  status.textContent='اتصال به تلگرام موفق شد.';
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='flex';
+  refreshChats();
  }
+ if(data.type==='error'||data.type==='config_error')
+  document.getElementById('status').textContent=data.message;
+}
+
+function onTelegramData(raw){
+ const data=parseData(raw);
+
+ if(data.type==='chat_item'&&data.item){
+  const old=chats.get(String(data.item.id));
+  if(old&&old.photoUrl)data.item.photoUrl=old.photoUrl;
+  chats.set(String(data.item.id),data.item);
+  renderChats();
+ }
+
+ if(data.type==='chat_photo'){
+  const chat=chats.get(String(data.chatId));
+  if(chat){chat.photoUrl=data.dataUrl;renderChats();}
+  if(String(data.chatId)===String(currentChatId)){
+   const avatar=document.getElementById('chatAvatar');
+   if(avatar){
+    avatar.innerHTML='';
+    const img=document.createElement('img');
+    img.src=data.dataUrl;
+    avatar.appendChild(img);
+   }
+  }
+ }
+
+ if(data.type==='voice_file'){
+  voiceFiles.set(String(data.messageId),data.dataUrl);
+  const bubble=document.querySelector('[data-message-id="'+String(data.messageId)+'"]');
+  if(bubble){
+   const audio=document.createElement('audio');
+   audio.controls=true;
+   audio.src=data.dataUrl;
+   bubble.insertBefore(audio,bubble.querySelector('.msgtime'));
+  }
+ }
+
+ if(data.type==='messages'&&String(data.chatId)===String(currentChatId)){
+  renderMessages(data.items||[]);
+ }
+
+ if((data.type==='new_message'||data.type==='sent')&&data.item){
+  if(String(data.chatId)===String(currentChatId))addMessage(data.item);
+  const chat=chats.get(String(data.chatId));
+  if(chat){chat.lastMessage=data.item.text||'پیام صوتی';renderChats();}
+ }
+
+ if(data.type==='error')alert(data.message||'خطای تلگرام');
+}
+function refreshChats(){
+ if(!window.TelegramBridge)return;
+ chats.clear();
+ document.getElementById('chatList').innerHTML='<div id="empty">در حال دریافت گفتگوها...</div>';
+ TelegramBridge.loadChats();
+}
+
+function renderChats(){
+ const list=document.getElementById('chatList');
+ list.innerHTML='';
+ if(chats.size===0){
+  list.innerHTML='<div id="empty">هنوز گفتگویی دریافت نشده است.</div>';
+  return;
+ }
+ Array.from(chats.values()).forEach(chat=>{
+  const row=document.createElement('div');
+  row.className='chat';
+  const avatar=document.createElement('div');
+  avatar.className='avatar';
+  avatar.textContent=(chat.title||'?').trim().charAt(0)||'✈';
+
+  const info=document.createElement('div');
+  info.className='chatinfo';
+  const name=document.createElement('div');
+  name.className='chatname';
+  name.textContent=chat.title||'گفتگو';
+  const preview=document.createElement('div');
+  preview.className='preview';
+  preview.textContent=chat.lastMessage||'برای دیدن پیام‌ها باز کنید';
+  info.append(name,preview);
+
+  const meta=document.createElement('div');
+  meta.className='chatmeta';
+  if(Number(chat.unreadCount)>0){
+   const badge=document.createElement('span');
+   badge.className='unread';
+   badge.textContent=chat.unreadCount;
+   meta.appendChild(badge);
+  }
+  row.append(avatar,info,meta);
+  row.onclick=()=>openChat(chat.id,chat.title);
+  list.appendChild(row);
+ });
+}
+
+function openChat(id,title){
+ currentChatId=Number(id);
+ currentChatTitle=title||'گفتگو';
+ document.getElementById('chatTitle').textContent=currentChatTitle;
+ document.getElementById('chatAvatar').textContent=currentChatTitle.charAt(0)||'✈';
+ document.getElementById('chatList').style.display='none';
+ document.getElementById('bottom').style.display='none';
+ document.querySelector('.tabs').style.display='none';
+ document.getElementById('conversation').style.display='flex';
+ document.getElementById('messages').innerHTML='<div id="messageEmpty" style="text-align:center;color:#91a8c2">در حال دریافت پیام‌ها...</div>';
+ reloadMessages();
+}
+
+function reloadMessages(){
+ if(currentChatId!==null&&window.TelegramBridge)
+  TelegramBridge.openChat(currentChatId);
+}
+
+function backToChats(){
+ currentChatId=null;
+ document.getElementById('conversation').style.display='none';
+ document.getElementById('chatList').style.display='block';
+ document.getElementById('bottom').style.display='flex';
+ document.querySelector('.tabs').style.display='flex';
+}
+
+function renderMessages(items){
+ const box=document.getElementById('messages');
+ box.innerHTML='';
+ if(!items.length){
+  box.innerHTML='<div style="text-align:center;color:#91a8c2">هنوز پیامی وجود ندارد.</div>';
+  return;
+ }
+ items.forEach(addMessage);
+ box.scrollTop=box.scrollHeight;
+}
+
+function addMessage(item){
+ if(!item)return;
+ const box=document.getElementById('messages');
+ const empty=document.getElementById('messageEmpty');
+ if(empty)empty.remove();
+
+ const bubble=document.createElement('div');
+ bubble.className='bubble'+(item.outgoing?' out':'');
+ const text=document.createElement('div');
+ text.textContent=item.text||'پیام غیرمتنی';
+ bubble.appendChild(text);
+
+ const time=document.createElement('div');
+ time.className='msgtime';
+ if(item.date)time.textContent=new Date(Number(item.date)*1000).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
+ bubble.appendChild(time);
+ box.appendChild(bubble);
+ box.scrollTop=box.scrollHeight;
+}
+
+function sendCurrentMessage(){
+ const input=document.getElementById('messageInput');
+ const text=input.value.trim();
+ if(!text||currentChatId===null||!window.TelegramBridge)return;
+ TelegramBridge.sendMessage(currentChatId,text);
+ input.value='';
 }
 </script>
 </body>

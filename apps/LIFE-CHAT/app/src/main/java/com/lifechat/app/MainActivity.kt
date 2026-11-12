@@ -177,7 +177,14 @@ class MainActivity : Activity() {
             runOnUiThread {
                 if (telegramManager == null) {
                     telegramManager = TelegramManager(this@MainActivity) { data ->
-                        sendJs("onTelegramState", data)
+                        val type = data.optString("type")
+                        if (type == "chat_item" || type == "messages" ||
+                            type == "new_message" || type == "sent" ||
+                            type == "chat_photo" || type == "voice_file") {
+                            sendJs("onTelegramData", data)
+                        } else {
+                            sendJs("onTelegramState", data)
+                        }
                     }
                 }
                 telegramManager?.start()
@@ -197,6 +204,21 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun sendPassword(password: String) {
             telegramManager?.sendPassword(password)
+        }
+
+        @JavascriptInterface
+        fun loadChats() {
+            telegramManager?.loadChats()
+        }
+
+        @JavascriptInterface
+        fun openChat(chatId: Long) {
+            telegramManager?.openChat(chatId)
+        }
+
+        @JavascriptInterface
+        fun sendMessage(chatId: Long, text: String) {
+            telegramManager?.sendMessage(chatId, text)
         }
     }
 

@@ -18,6 +18,16 @@ class TelegramManager(
     private var client: Client? = null
     private val prefs = context.getSharedPreferences("tdlib_storage", Context.MODE_PRIVATE)
 
+    private data class FileTarget(
+        val type: String,
+        val chatId: Long,
+        val messageId: Long = 0L,
+        val mimeType: String = "application/octet-stream"
+    )
+
+    private val fileTargets = mutableMapOf<Int, MutableList<FileTarget>>()
+    private val fileTargetsLock = Any()
+
     @Synchronized
     fun start() {
         if (client != null) return
@@ -48,6 +58,8 @@ class TelegramManager(
                         is TdApi.UpdateChatLastMessage -> {
                             getChat(obj.chatId)
                         }
+                        is TdApi.UpdateChatPhoto -> getChat(obj.chatId)
+                        is TdApi.UpdateFile -> handleFileUpdate(obj.file)
                     }
                 },
                 { error -> emit("error", error.message ?: "خطای TDLib") },
@@ -129,6 +141,11 @@ class TelegramManager(
                 item.put("unreadCount", result.unreadCount)
                 item.put("lastMessage", messageText(result.lastMessage))
 
+                result.photo?.small?.let { photo ->
+                    item.put("photoFileId", photo.id)
+                    requestFile(photo, FileTarget("chat_photo", result.id, mimeType = "image/jpeg"))
+                }
+
                 val data = JSONObject()
                 data.put("type", "chat_item")
                 data.put("item", item)
@@ -200,6 +217,27 @@ class TelegramManager(
         item.put("text", messageText(message))
         item.put("date", message.date)
         item.put("outgoing", message.isOutgoing)
+
+        when (val content = message.content) {
+            is TdApi.MessageVoiceNote -> {
+                val voice = content.voiceNote
+                if (voice != null) {
+                    item.put("isVoice", true)
+                    item.put("duration", voice.duration)
+                    item.put("mimeType", voice.mimeType ?: "audio/ogg")
+                    item.put("voiceFileId", voice.voice.id)
+                    requestFile(
+                        voice.voice,
+                        FileTarget(
+                            "voice_file",
+                            message.chatId,
+                            message.id,
+                            voice.mimeType ?: "audio/ogg"
+                        )
+                    )
+                }
+            }
+        }
         return item
     }
 
@@ -209,6 +247,65 @@ class TelegramManager(
         return when (val content = message.content) {
             is TdApi.MessageText -> content.text.text
             else -> ""
+        }
+    }
+
+    private fun requestFile(file: TdApi.File, target: FileTarget) {
+        if (file.local != null && file.local.isDownloadingCompleted &&
+            file.local.path.isNotBlank()) {
+            deliverFile(file, listOf(target))
+            return
+        }
+
+        synchronized(fileTargetsLock) {
+            val targets = fileTargets.getOrPut(file.id) { mutableListOf() }
+            if (!targets.contains(target)) targets.add(target)
+        }
+
+        client?.send(TdApi.DownloadFile(file.id, 16, 0, 0, false)) { result ->
+            if (result is TdApi.Error) {
+                synchronized(fileTargetsLock) {
+                    fileTargets.remove(file.id)
+                }
+                emit("error", "دانلود فایل تلگرام ناموفق بود: ${result.message}")
+            } else if (result is TdApi.File && result.local != null &&
+                result.local.isDownloadingCompleted) {
+                handleFileUpdate(result)
+            }
+        }
+    }
+
+    private fun handleFileUpdate(file: TdApi.File?) {
+        if (file == null || file.local == null ||
+            !file.local.isDownloadingCompleted ||
+            file.local.path.isBlank()) return
+
+        val targets = synchronized(fileTargetsLock) {
+            fileTargets.remove(file.id)?.toList() ?: emptyList()
+        }
+        if (targets.isNotEmpty()) deliverFile(file, targets)
+    }
+
+    private fun deliverFile(file: TdApi.File, targets: List<FileTarget>) {
+        try {
+            val source = File(file.local.path)
+            if (!source.isFile || source.length() <= 0L ||
+                source.length() > 8L * 1024L * 1024L) return
+
+            val encoded = Base64.encodeToString(source.readBytes(), Base64.NO_WRAP)
+
+            targets.forEach { target ->
+                val data = JSONObject()
+                data.put("type", target.type)
+                data.put("chatId", target.chatId)
+                data.put("dataUrl", "data:${target.mimeType};base64,$encoded")
+                if (target.messageId != 0L) {
+                    data.put("messageId", target.messageId)
+                }
+                callback(data)
+            }
+        } catch (e: Exception) {
+            emit("error", "خواندن فایل تلگرام ناموفق بود: ${e.message}")
         }
     }
 
