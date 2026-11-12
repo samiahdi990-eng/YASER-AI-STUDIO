@@ -679,6 +679,11 @@ function appendSupportRow(list){
  const name=document.createElement('div');
  name.className='chatname';
  name.textContent='پشتیبان LIFE CHAT';
+ const verified=document.createElement('span');
+ verified.textContent=' ✓';
+ verified.title='پشتیبان تأییدشده LIFE CHAT';
+ verified.style.cssText='display:inline-block;color:#2196f3;font-size:17px;font-weight:900;margin-right:5px;vertical-align:middle;';
+ name.appendChild(verified);
  const preview=document.createElement('div');
  preview.className='preview';
  preview.textContent='گفتگوی مستقیم با پشتیبان';
