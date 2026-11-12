@@ -300,6 +300,70 @@ button:active{transform:scale(.96);filter:brightness(1.15)}
  *{transition:none!important;animation:none!important}
 }
 
+
+/* Final Telegram header and menu */
+.header {
+  direction:ltr !important;
+  justify-content:space-between !important;
+  position:relative;
+  min-height:62px;
+}
+.header .brand {
+  font-size:23px !important;
+  font-weight:800;
+  letter-spacing:.3px;
+  color:var(--white);
+  margin:0 !important;
+}
+.header-actions { position:relative; }
+.header-menu {
+  display:none;
+  position:absolute;
+  z-index:9999;
+  top:46px;
+  right:0;
+  width:235px;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:var(--panel);
+  box-shadow:0 12px 35px #0006;
+  direction:rtl;
+}
+.header-menu.show { display:block; }
+.header-menu button {
+  display:block;
+  width:100%;
+  text-align:right;
+  border:0;
+  padding:12px;
+  color:var(--white);
+  background:transparent;
+  border-radius:9px;
+  font-size:14px;
+}
+#menuAccountId {
+  padding:12px;
+  color:var(--muted);
+  font-size:13px;
+  direction:rtl;
+  overflow-wrap:anywhere;
+}
+body.light-mode {
+  --bg:#edf3fa;
+  --panel:#ffffff;
+  --panel2:#e5edf7;
+  --blue:#1688e8;
+  --cyan:#159db5;
+  --purple:#7355db;
+  --muted:#61738c;
+  --line:rgba(40,70,110,.15);
+  --white:#17263b;
+}
+body.light-mode .header-menu {
+  box-shadow:0 12px 35px #3452;
+}
+
 </style>
 </head>
 <body>
@@ -330,17 +394,19 @@ button:active{transform:scale(.96);filter:brightness(1.15)}
 
 <section id="app">
  <header class="header">
-  <div class="tglogo">
-   <svg viewBox="0 0 24 24"><path d="M21.8 4.2 18.5 20c-.25 1.1-.9 1.35-1.8.85l-5-3.7-2.4 2.3c-.3.3-.55.55-1.1.55l.35-5.1 9.3-8.4c.4-.35-.1-.55-.6-.2L5.75 13.5.8 11.95c-1.1-.35-1.1-1.1.25-1.6L20.4 2.8c.9-.35 1.7.2 1.4 1.4z"/></svg>
+  <div class="brand">Telegram</div>
+  <div class="header-actions">
+    <button class="headbtn" onclick="toggleHeaderMenu()" aria-label="منو">⋮</button>
+    <div id="headerMenu" class="header-menu">
+      <button onclick="toggleTheme()">☀️ / 🌙 تغییر حالت شب و روز</button>
+      <div id="menuAccountId">شناسه تلگرام: در انتظار دریافت</div>
+    </div>
   </div>
-  <div class="brand">LIFE CHAT<small>پیام‌رسان تلگرام</small></div>
-  <button class="headbtn" onclick="refreshChats()">⟳</button>
- </header>
+</header>
 
  <div class="searchbar">
   <span>⌕</span>
   <input id="chatSearch" placeholder="جستجو در گفتگوها..." oninput="renderChats()">
-  <button onclick="refreshChats()" title="به‌روزرسانی">⟳</button>
 </div>
 <nav class="tabs" id="chatTabs">
   <button class="active" onclick="setChatFilter('all',this)">همه</button>
@@ -449,11 +515,36 @@ function onTelegramState(raw){
   document.getElementById('status').textContent=data.message;
 }
 
+
+function toggleHeaderMenu(){
+ const menu=document.getElementById('headerMenu');
+ if(menu)menu.classList.toggle('show');
+}
+function toggleTheme(){
+ document.body.classList.toggle('light-mode');
+ try {
+  localStorage.setItem('lifechat-theme',
+   document.body.classList.contains('light-mode')?'light':'dark');
+ } catch(e){}
+ const menu=document.getElementById('headerMenu');
+ if(menu)menu.classList.remove('show');
+}
+try {
+ if(localStorage.getItem('lifechat-theme')==='light')
+  document.body.classList.add('light-mode');
+} catch(e){}
+document.addEventListener('click',function(e){
+ const menu=document.getElementById('headerMenu');
+ if(menu && !e.target.closest('.header-actions'))
+  menu.classList.remove('show');
+});
+
 function onTelegramData(raw){
  const data=parseData(raw);
  if(data.type==='settings_data'){
   document.getElementById('accountPhone').textContent='شماره: '+(data.phoneNumber||'ثبت نشده');
   document.getElementById('accountUsername').textContent=data.username?'نام کاربری: @'+data.username:'نام کاربری ثبت نشده';
+  document.getElementById('menuAccountId').textContent='شناسه تلگرام: '+(data.userId||'نامشخص');
   document.getElementById('profileFirst').value=data.firstName||'';
   document.getElementById('profileLast').value=data.lastName||'';
   document.getElementById('premiumStatus').textContent=data.isPremium?'⭐ Premium فعال است':'Premium فعال نیست';
