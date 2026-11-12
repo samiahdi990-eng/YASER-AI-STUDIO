@@ -48,6 +48,17 @@ input{width:100%;padding:14px;margin:8px 0;border:1px solid #344b69;border-radiu
 .composer button{padding:13px 17px}
 #bottom{display:flex;justify-content:space-around;padding:13px;background:#13243a;border-top:1px solid #263b57;color:#a9c0dd}
 #bottom span{font-size:13px}
+
+#settingsScreen{display:none;flex:1;overflow-y:auto;padding:16px;background:#0b1728}
+.settings-card{background:#17283e;border:1px solid #263b57;border-radius:16px;padding:15px;margin-bottom:13px}
+.settings-card h3{margin:0 0 12px;font-size:16px}
+.settings-card p{color:#a9c0dd;font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+.settings-card input{margin:5px 0 10px}
+.settings-card button{margin-top:7px}
+.settings-session{padding:12px 0;border-top:1px solid #344b69}
+.settings-session button{background:#a83242;padding:8px 12px;font-size:13px}
+.settings-current{color:#67d6a0;font-size:12px}
+#settingsNotice{color:#75caff;font-size:13px;margin:8px 0}
 </style>
 </head>
 <body>
@@ -110,11 +121,37 @@ input{width:100%;padding:14px;margin:8px 0;border:1px solid #344b69;border-radiu
   </div>
  </section>
 
+
+ <section id="settingsScreen">
+  <div class="settings-card">
+   <h3>👤 حساب تلگرام</h3>
+   <p id="accountPhone">در حال دریافت اطلاعات حساب...</p>
+   <p id="accountUsername"></p>
+   <label>نام</label><input id="profileFirst" placeholder="نام">
+   <label>نام خانوادگی</label><input id="profileLast" placeholder="نام خانوادگی">
+   <button onclick="saveTelegramProfile()">ذخیره نام در تلگرام</button>
+   <label>بیوگرافی</label><input id="profileBio" maxlength="140" placeholder="درباره خودتان">
+   <button onclick="saveTelegramBio()">ذخیره بیوگرافی</button>
+  </div>
+  <div class="settings-card">
+   <h3>⭐ تلگرام Premium</h3>
+   <p id="premiumStatus">در حال بررسی...</p>
+   <p id="premiumDescription"></p>
+   <p>خرید اشتراک در این نسخه فعال نشده است.</p>
+  </div>
+  <div class="settings-card">
+   <h3>📱 دستگاه‌ها و نشست‌های فعال</h3>
+   <div id="sessionsList">در حال دریافت نشست‌ها...</div>
+   <button onclick="TelegramBridge.loadSessions()">به‌روزرسانی نشست‌ها</button>
+  </div>
+  <div id="settingsNotice"></div>
+  <button onclick="closeSettings()" style="width:100%;margin-bottom:20px">بازگشت به گفتگوها</button>
+ </section>
  <footer id="bottom">
   <span>💬 چت‌ها</span>
   <span>👥 مخاطبین</span>
   <span>📞 تماس‌ها</span>
-  <span>⚙ تنظیمات</span>
+  <span onclick="showSettings()" style="cursor:pointer">⚙ تنظیمات</span>
  </footer>
 </section>
 
@@ -157,6 +194,7 @@ function onTelegramState(raw){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='flex';
   refreshChats();
+  if(window.TelegramBridge)TelegramBridge.loadSettings();
  }
  if(data.type==='error'||data.type==='config_error')
   document.getElementById('status').textContent=data.message;
@@ -164,6 +202,40 @@ function onTelegramState(raw){
 
 function onTelegramData(raw){
  const data=parseData(raw);
+ if(data.type==='settings_data'){
+  document.getElementById('accountPhone').textContent='شماره: '+(data.phoneNumber||'ثبت نشده');
+  document.getElementById('accountUsername').textContent=data.username?'نام کاربری: @'+data.username:'نام کاربری ثبت نشده';
+  document.getElementById('profileFirst').value=data.firstName||'';
+  document.getElementById('profileLast').value=data.lastName||'';
+  document.getElementById('premiumStatus').textContent=data.isPremium?'⭐ Premium فعال است':'Premium فعال نیست';
+ }
+ if(data.type==='bio_data')document.getElementById('profileBio').value=data.bio||'';
+ if(data.type==='premium_data'){
+  document.getElementById('premiumStatus').textContent=data.isPremium?'⭐ Premium فعال است':'Premium فعال نیست';
+  document.getElementById('premiumDescription').textContent=data.description||'';
+ }
+ if(data.type==='sessions_data'){
+  const list=document.getElementById('sessionsList');list.innerHTML='';
+  (data.items||[]).forEach(s=>{
+   const row=document.createElement('div');row.className='settings-session';
+   const title=document.createElement('strong');title.textContent=(s.app||'Telegram')+' '+(s.version||'');
+   const detail=document.createElement('p');detail.textContent=[s.device,s.platform,s.system,s.location,s.ip?'IP: '+s.ip:''].filter(Boolean).join(' • ');
+   const status=document.createElement('div');status.className=s.current?'settings-current':'';
+   status.textContent=s.current?'این دستگاه (نشست فعلی)':'آخرین فعالیت: '+(s.lastActive?new Date(s.lastActive*1000).toLocaleString('fa-IR'):'نامشخص');
+   row.append(title,detail,status);
+   if(!s.current){
+    const b=document.createElement('button');b.textContent='بستن این نشست';
+    b.onclick=()=>{if(confirm('این دستگاه از حساب تلگرام خارج شود؟'))TelegramBridge.terminateSession(Number(s.id));};
+    row.appendChild(b);
+   }
+   list.appendChild(row);
+  });
+  if(!(data.items||[]).length)list.textContent='نشستی پیدا نشد.';
+ }
+ if(data.type==='settings_saved'||data.type==='settings_error'){
+  document.getElementById('settingsNotice').textContent=data.message||'';
+  if(data.type==='settings_error')alert(data.message||'خطا در تنظیمات');
+ }
 
  if(data.type==='chat_item'&&data.item){
   const old=chats.get(String(data.item.id));
@@ -208,6 +280,27 @@ function onTelegramData(raw){
  }
 
  if(data.type==='error')alert(data.message||'خطای تلگرام');
+}
+function showSettings(){
+ document.getElementById('chatList').style.display='none';
+ document.getElementById('conversation').style.display='none';
+ document.querySelector('.tabs').style.display='none';
+ document.getElementById('bottom').style.display='none';
+ document.getElementById('settingsScreen').style.display='block';
+ document.getElementById('settingsNotice').textContent='';
+ TelegramBridge.loadSettings();
+}
+function closeSettings(){
+ document.getElementById('settingsScreen').style.display='none';
+ document.getElementById('chatList').style.display='block';
+ document.querySelector('.tabs').style.display='flex';
+ document.getElementById('bottom').style.display='flex';
+}
+function saveTelegramProfile(){
+ TelegramBridge.updateProfile(document.getElementById('profileFirst').value,document.getElementById('profileLast').value);
+}
+function saveTelegramBio(){
+ TelegramBridge.updateBio(document.getElementById('profileBio').value);
 }
 function refreshChats(){
  if(!window.TelegramBridge)return;

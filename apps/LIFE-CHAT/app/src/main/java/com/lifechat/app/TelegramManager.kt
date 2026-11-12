@@ -111,6 +111,7 @@ class TelegramManager(
             is TdApi.AuthorizationStateReady -> {
                 emit("ready", "ورود به تلگرام موفق بود")
                 loadChats()
+                loadSettings()
             }
 
             is TdApi.AuthorizationStateLoggingOut ->
@@ -306,6 +307,103 @@ class TelegramManager(
             }
         } catch (e: Exception) {
             emit("error", "خواندن فایل تلگرام ناموفق بود: ${e.message}")
+        }
+    }
+
+
+    fun loadSettings() {
+        client?.send(TdApi.GetMe()) { result ->
+            if (result is TdApi.User) {
+                val d = JSONObject()
+                d.put("type", "settings_data")
+                d.put("userId", result.id)
+                d.put("firstName", result.firstName ?: "")
+                d.put("lastName", result.lastName ?: "")
+                d.put("phoneNumber", result.phoneNumber ?: "")
+                d.put("username", result.usernames?.editableUsername ?: "")
+                d.put("isPremium", result.isPremium)
+                callback(d)
+                client?.send(TdApi.GetUserFullInfo(result.id)) { full ->
+                    if (full is TdApi.UserFullInfo) {
+                        val b = JSONObject()
+                        b.put("type", "bio_data")
+                        b.put("bio", full.bio?.text ?: "")
+                        callback(b)
+                    } else if (full is TdApi.Error) emit("settings_error", full.message)
+                }
+                client?.send(TdApi.GetPremiumState()) { p ->
+                    if (p is TdApi.PremiumState) {
+                        val d2 = JSONObject()
+                        d2.put("type", "premium_data")
+                        d2.put("isPremium", result.isPremium)
+                        d2.put("description", p.state?.text ?: "")
+                        callback(d2)
+                    } else if (p is TdApi.Error) emit("settings_error", p.message)
+                }
+                loadSessions()
+            } else if (result is TdApi.Error) emit("settings_error", result.message)
+        }
+    }
+
+    fun loadSessions() {
+        client?.send(TdApi.GetActiveSessions()) { result ->
+            if (result is TdApi.Sessions) {
+                val arr = JSONArray()
+                (result.sessions ?: emptyArray()).forEach { s ->
+                    val x = JSONObject()
+                    x.put("id", s.id)
+                    x.put("current", s.isCurrent)
+                    x.put("app", s.applicationName ?: "Telegram")
+                    x.put("version", s.applicationVersion ?: "")
+                    x.put("device", s.deviceModel ?: "")
+                    x.put("platform", s.platform ?: "")
+                    x.put("system", s.systemVersion ?: "")
+                    x.put("ip", s.ipAddress ?: "")
+                    x.put("location", s.location ?: "")
+                    x.put("lastActive", s.lastActiveDate)
+                    arr.put(x)
+                }
+                val d = JSONObject()
+                d.put("type", "sessions_data")
+                d.put("items", arr)
+                callback(d)
+            } else if (result is TdApi.Error) emit("settings_error", result.message)
+        }
+    }
+
+    fun updateProfile(firstName: String, lastName: String) {
+        if (firstName.isBlank() || firstName.length > 64 || lastName.length > 64) {
+            emit("settings_error", "نام معتبر نیست.")
+            return
+        }
+        client?.send(TdApi.SetName(firstName.trim(), lastName.trim())) { r ->
+            if (r is TdApi.Ok) {
+                emit("settings_saved", "نام تلگرام ذخیره شد.")
+                loadSettings()
+            } else if (r is TdApi.Error) emit("settings_error", r.message)
+        }
+    }
+
+    fun updateBio(bio: String) {
+        if (bio.length > 140) {
+            emit("settings_error", "بیوگرافی نباید بیشتر از ۱۴۰ حرف باشد.")
+            return
+        }
+        client?.send(TdApi.SetBio(bio.trim())) { r ->
+            if (r is TdApi.Ok) {
+                emit("settings_saved", "بیوگرافی ذخیره شد.")
+                loadSettings()
+            } else if (r is TdApi.Error) emit("settings_error", r.message)
+        }
+    }
+
+    fun terminateSession(sessionId: Long) {
+        if (sessionId == 0L) return
+        client?.send(TdApi.TerminateSession(sessionId)) { r ->
+            if (r is TdApi.Ok) {
+                emit("settings_saved", "نشست بسته شد.")
+                loadSessions()
+            } else if (r is TdApi.Error) emit("settings_error", r.message)
         }
     }
 

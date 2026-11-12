@@ -180,7 +180,10 @@ class MainActivity : Activity() {
                         val type = data.optString("type")
                         if (type == "chat_item" || type == "messages" ||
                             type == "new_message" || type == "sent" ||
-                            type == "chat_photo" || type == "voice_file") {
+                            type == "chat_photo" || type == "voice_file" ||
+                            type == "settings_data" || type == "bio_data" ||
+                            type == "premium_data" || type == "sessions_data" ||
+                            type == "settings_saved" || type == "settings_error") {
                             sendJs("onTelegramData", data)
                         } else {
                             sendJs("onTelegramState", data)
@@ -219,6 +222,25 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun sendMessage(chatId: Long, text: String) {
             telegramManager?.sendMessage(chatId, text)
+        }
+
+        @JavascriptInterface
+        fun loadSettings() { telegramManager?.loadSettings() }
+
+        @JavascriptInterface
+        fun updateProfile(firstName: String, lastName: String) {
+            telegramManager?.updateProfile(firstName, lastName)
+        }
+
+        @JavascriptInterface
+        fun updateBio(bio: String) { telegramManager?.updateBio(bio) }
+
+        @JavascriptInterface
+        fun loadSessions() { telegramManager?.loadSessions() }
+
+        @JavascriptInterface
+        fun terminateSession(sessionId: Long) {
+            telegramManager?.terminateSession(sessionId)
         }
     }
 
