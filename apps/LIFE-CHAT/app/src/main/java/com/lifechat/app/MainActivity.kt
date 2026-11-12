@@ -33,6 +33,7 @@ class MainActivity : Activity() {
     }
 
     private var uid: String? = null
+    private val ADMIN_UID = "4L4fXNq3SdT9rpVruVp2TLJ07ky1"
     private var activeRoom: String? = null
     private val attempting = mutableSetOf<String>()
 
@@ -289,26 +290,25 @@ class MainActivity : Activity() {
             userStatsListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val onlineUsers = snapshot.children.filter {
-                        it.child("online").getValue(Boolean::class.java) == true
-                    }
+                    it.child("online").getValue(Boolean::class.java) == true
+                }
+                val usersArray = JSONArray()
+                snapshot.children.forEach { item ->
+                    usersArray.put(
+                        JSONObject()
+                            .put("uid", item.key ?: "")
+                            .put("name", item.child("name").getValue(String::class.java) ?: "کاربر مهمان")
+                            .put("online", item.child("online").getValue(Boolean::class.java) == true)
+                            .put("verified", item.child("verified").getValue(Boolean::class.java) == true)
+                    )
+                }
+                val result = JSONObject()
+                    .put("total", snapshot.childrenCount)
+                    .put("online", onlineUsers.size)
+                    .put("users", usersArray)
+                    .put("isAdmin", user.uid == ADMIN_UID)
 
-                    val usersArray = JSONArray()
-                    onlineUsers.forEach {
-                        usersArray.put(
-                            JSONObject().put(
-                                "name",
-                                it.child("name").getValue(String::class.java)
-                                    ?: "کاربر مهمان"
-                            )
-                        )
-                    }
-
-                    val result = JSONObject()
-                        .put("total", snapshot.childrenCount)
-                        .put("online", onlineUsers.size)
-                        .put("users", usersArray)
-
-                    sendJs("onUserStatsResult", result)
+                sendJs("onUserStatsResult", result)
                 }
 
                 override fun onCancelled(error: DatabaseError) {
@@ -317,6 +317,49 @@ class MainActivity : Activity() {
             }
 
             usersRef.addValueEventListener(userStatsListener!!)
+        }
+
+
+        @JavascriptInterface
+        fun setUserVerified(targetUid: String, verified: Boolean) {
+            val user = FirebaseAuth.getInstance().currentUser
+            if (user == null || user.uid != ADMIN_UID) {
+                sendJs("onSetUserVerifiedResult", JSONObject()
+                    .put("ok", false).put("error", "دسترسی مدیر ندارید."))
+                return
+            }
+            if (!targetUid.matches(Regex("[A-Za-z0-9_-]{10,128}"))) {
+                sendJs("onSetUserVerifiedResult", JSONObject()
+                    .put("ok", false).put("error", "شناسه کاربر معتبر نیست."))
+                return
+            }
+
+            val target = db.child("users").child(targetUid)
+            target.get()
+                .addOnSuccessListener { snapshot ->
+                    if (!snapshot.exists()) {
+                        sendJs("onSetUserVerifiedResult", JSONObject()
+                            .put("ok", false).put("error", "کاربر پیدا نشد."))
+                    } else {
+                        target.updateChildren(mapOf("verified" to verified))
+                            .addOnSuccessListener {
+                                sendJs("onSetUserVerifiedResult", JSONObject()
+                                    .put("ok", true)
+                                    .put("uid", targetUid)
+                                    .put("verified", verified))
+                            }
+                            .addOnFailureListener { error ->
+                                sendJs("onSetUserVerifiedResult", JSONObject()
+                                    .put("ok", false)
+                                    .put("error", error.localizedMessage ?: "ثبت نشان ناموفق بود."))
+                            }
+                    }
+                }
+                .addOnFailureListener { error ->
+                    sendJs("onSetUserVerifiedResult", JSONObject()
+                        .put("ok", false)
+                        .put("error", error.localizedMessage ?: "خطا در دریافت کاربر."))
+                }
         }
 
         @JavascriptInterface

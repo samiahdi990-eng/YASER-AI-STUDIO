@@ -43,7 +43,7 @@
     },
     "users": {
       "$uid": {
-        ".write": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (auth.uid === $uid || (auth.uid === '4L4fXNq3SdT9rpVruVp2TLJ07ky1' && data.exists() && newData.child('name').val() === data.child('name').val() && newData.child('online').val() === data.child('online').val() && newData.child('lastSeen').val() === data.child('lastSeen').val() && newData.child('verified').isBoolean()))",
         ".validate": "newData.hasChildren(['name','online','lastSeen']) && newData.child('name').isString() && newData.child('online').isBoolean() && newData.child('lastSeen').isNumber()"
       },
       ".read": "auth != null"

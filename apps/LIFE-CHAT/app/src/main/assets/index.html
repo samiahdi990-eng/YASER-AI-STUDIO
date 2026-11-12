@@ -458,6 +458,14 @@ body.light-mode .header-menu {
    <div id="sessionsList">در حال دریافت نشست‌ها...</div>
    <button onclick="TelegramBridge.loadSessions()">به‌روزرسانی نشست‌ها</button>
   </div>
+
+  <div id="adminPanel" class="settings-card" style="display:none">
+   <h3>🛡 مدیریت تیک آبی LIFE CHAT</h3>
+   <p>اعطای نشان تأیید به کاربران</p>
+   <input id="adminUserSearch" placeholder="جستجوی نام یا شناسه کاربر">
+   <div id="adminUsersList">در حال دریافت کاربران...</div>
+   <button onclick="FirebaseBridge.loadUserStats()">به‌روزرسانی فهرست</button>
+  </div>
   <div id="settingsNotice"></div>
   <button onclick="closeSettings()" style="width:100%;margin-bottom:20px">بازگشت به گفتگوها</button>
  </section>
@@ -837,6 +845,75 @@ function sendCurrentMessage(){
  TelegramBridge.sendMessage(currentChatId,text);
  input.value='';
 }
+
+function adminParse(data){
+ if(typeof data==='string'){try{return JSON.parse(data)}catch(e){return {}}}
+ return data||{};
+}
+window.adminUsers=[];
+window.onFirebaseAuthResult=function(raw){
+ const data=adminParse(raw);
+ if(data.ok && window.FirebaseBridge) FirebaseBridge.loadUserStats();
+};
+window.onUserStatsResult=function(raw){
+ const data=adminParse(raw);
+ const panel=document.getElementById('adminPanel');
+ if(!panel)return;
+ panel.style.display=data.isAdmin===true?'block':'none';
+ if(data.isAdmin===true){
+  window.adminUsers=data.users||[];
+  renderAdminUsers(window.adminUsers);
+ }
+};
+function renderAdminUsers(users){
+ const list=document.getElementById('adminUsersList');
+ if(!list)return;
+ const search=(document.getElementById('adminUserSearch')?.value||'').trim().toLowerCase();
+ list.innerHTML='';
+ const filtered=(users||[]).filter(u=>
+  String(u.name||'').toLowerCase().includes(search) ||
+  String(u.uid||'').toLowerCase().includes(search)
+ );
+ if(!filtered.length){list.textContent='کاربری پیدا نشد.';return;}
+ filtered.forEach(u=>{
+  const row=document.createElement('div');
+  row.className='settings-session';
+  row.style.cssText='padding:12px;margin:8px 0;background:#203650;border-radius:12px';
+  const title=document.createElement('strong');
+  title.textContent=u.name||'کاربر مهمان';
+  if(u.verified){
+   const tick=document.createElement('span');
+   tick.textContent=' ✓';
+   tick.title='تأییدشده LIFE CHAT';
+   tick.style.cssText='color:#2196f3;font-size:18px;font-weight:900';
+   title.appendChild(tick);
+  }
+  const detail=document.createElement('p');
+  detail.textContent='شناسه: '+u.uid+' • '+(u.online?'آنلاین':'آفلاین');
+  const button=document.createElement('button');
+  button.textContent=u.verified?'لغو تیک آبی':'اعطای تیک آبی';
+  button.onclick=()=>{
+   if(confirm(u.verified?'تیک آبی این کاربر لغو شود؟':'به این کاربر تیک آبی داده شود؟')){
+    FirebaseBridge.setUserVerified(u.uid,!u.verified);
+   }
+  };
+  row.append(title,detail,button);
+  list.appendChild(row);
+ });
+}
+document.addEventListener('input',function(e){
+ if(e.target && e.target.id==='adminUserSearch') renderAdminUsers(window.adminUsers);
+});
+window.onSetUserVerifiedResult=function(raw){
+ const data=adminParse(raw);
+ if(!data.ok){alert(data.error||'ثبت نشان ناموفق بود.');return;}
+ alert(data.verified?'تیک آبی اعطا شد.':'تیک آبی لغو شد.');
+ FirebaseBridge.loadUserStats();
+};
+window.addEventListener('load',function(){
+ if(window.FirebaseBridge) FirebaseBridge.signInAnonymously();
+});
+
 </script>
 </body>
 </html>
